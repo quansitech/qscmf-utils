@@ -11,6 +11,7 @@ class ConfigGenerator{
     const PICTURE = 'picture';
     const UEDITOR = 'ueditor';
     const SELECT = 'select';
+    const TEXTAREA = 'textarea';
 
     static private function strToArr($group){
         $array = preg_split('/[,;\r\n]+/', trim($group, ",;\r\n"));
@@ -87,6 +88,10 @@ class ConfigGenerator{
     static function addSelect($name, $title, $value, $options, $remark = '', $group = 1, $sort = 0){
         $extrea = self::arrToStr($options);
         self::add($name, self::SELECT, $title, $group, $extrea, $remark, $value, $sort);
+    }
+
+    static function addTextarea($name, $title, $value, $remark = '', $group = 1, $sort = 0){
+        self::add($name, self::TEXTAREA, $title, $group, '', $remark, $value, $sort);
     }
 
     static function add($name, $type, $title, $group, $extra, $remark, $value, $sort){
