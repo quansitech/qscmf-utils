@@ -24,8 +24,20 @@ class RefModel{
         $this->model_ents = $this->model->where([$this->ref_id => ['in', $keys]])->getField($this->ref_id . ',' . $fields, true);
     }
 
-    public function pick($value, $field){
-        return $this->model_ents[$value][$field];
+    public function pick($value, $field = null, $callback = null){
+
+        if(is_null($field)){
+            $pick_data = $this->model_ents[$value];
+        }
+        else{
+            $pick_data = $this->model_ents[$value][$field];
+        }
+
+        if(!is_null($callback)){
+            return call_user_func($callback, $pick_data);
+        }
+
+        return $pick_data;
     }
 
 }
