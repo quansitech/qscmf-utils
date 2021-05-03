@@ -40,4 +40,8 @@ class RefModel{
         return $pick_data;
     }
 
+    public function pickAll(){
+        return $this->model_ents;
+    }
+
 }

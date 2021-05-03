@@ -90,6 +90,25 @@ foreach($reader_ents as &$v){
 }
 ```
 
+```php
+//跨两张表查询数据
+//apply是读者申请表, return_reason表是申请退回原因定义表, 要查对着被退回的原因
+//status = 2是退回
+$reader_ents = D("Reader")->where(['status' => 2])->select();
+
+$apply_ref = new RefModel(D('Apply'), 'reader_id');
+$apply_ref->fill($reader_ents, 'id'); 
+
+$return_ref = new RefModel(D('ReturnReason'));
+$return_ref->fill($apply_ref->pickAll(), 'reason_id');
+
+foreach($reader_ents as &$v){
+    $v['return_reason_text'] = $apply_ref->pick($v['id'], 'reason_id', function($reason_id) use ($return_ref){
+        return $return_ref->pick($reason_id, 'desc');
+    }); 
+}
+```
+
 ### RedisLock
 
 基于Redis改造的悲观锁
