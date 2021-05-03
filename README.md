@@ -62,6 +62,28 @@ composer require quansitech/qscmf-utils
 
 从关联表预提取关联数组（解决N+1循环取数导致数据库频繁访问的问题）
 
+#### API
+1. fill($data_ents, $key, $extra_where = null)
+> 用处：给关联对象填充关联值
+> 
+> data_ents 关联数据源
+> 
+> key 从关联数据源提取关联表数据的键值
+> 
+> extra_where 附加查询条件
+
+2. pick($value, $field = null, $callback = null)
+> 用处：从关联对象中提取值
+>
+> value 关联数据源的对应数据，与fill方法的key对应
+> 
+> field 指定提取的字段，默认null，表示提取所有字段
+>
+> callback 回调函数，接收一个参数，为关联数据中，field指定的数据， return 作为最终提取数据
+
+3. pickAll()
+> 用处： 从关联对象中提取全部数据
+
 #### 用法
 
 一般用法

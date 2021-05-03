@@ -14,14 +14,16 @@ class RefModel{
         $this->ref_id = $ref_id;
     }
 
-    public function fill($data_ents, $key){
+    public function fill($data_ents, $key, $extra_where = null){
         $keys = collect($data_ents)->pluck($key)->unique()->all();
         $fields = join(',', $this->model->getDbFields());
         if(!$keys){
             $this->model_ents = [];
             return;
         }
-        $this->model_ents = $this->model->where([$this->ref_id => ['in', $keys]])->getField($this->ref_id . ',' . $fields, true);
+        $map = (array)$extra_where;
+        $map[$this->ref_id] = ['in', $keys];
+        $this->model_ents = $this->model->where($map)->getField($this->ref_id . ',' . $fields, true);
     }
 
     public function pick($value, $field = null, $callback = null){
