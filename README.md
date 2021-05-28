@@ -12,7 +12,7 @@ composer require quansitech/qscmf-utils
 > 用法：
 >
 > ```php
-> $process = new \Larafortp\CmmMigrate\CmmProcess();
+> $process = new \Qscmf\Utils\MigrationHelper\CmmProcess();
 > //timeout为程序的超时退出时间，默认60秒
 > $process->setTimeOut(100)->callTp('/var/www/move/www/index.php', '/home/index/test');
 > ```
@@ -123,7 +123,7 @@ $key 名称
 ##### 代码示例
 ```php
 public function execShell(){
-    $redis_lock = \Qscmf\Lib\RedisLock::getInstance();
+    $redis_lock = \Qscmf\Utils\Libs\RedisLock::getInstance();
     $is_lock = $redis_lock->lock('exec_shell_lock_key', 60);
     $is_lock === false && $this->error('请一分钟后再操作');
 
