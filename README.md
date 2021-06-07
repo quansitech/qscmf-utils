@@ -27,6 +27,8 @@ composer require quansitech/qscmf-utils
 
 + updateGroup($config_name, $group_name)  //将配置转移到指定分组
 
++ getGroupId($group_name) //根据分组名获取分组id
+
   以下为新增配置项的操作函数
   > $name 配置名
   >
@@ -53,6 +55,8 @@ composer require quansitech/qscmf-utils
 + addSelect($name, $title, $value, $options, $remark = '', $group = 1, $sort = 0) //新增下拉选择配置值 $options 是下拉配置数组
 
 + add($name, $type, $title, $group, $extra, $remark, $value, $sort) //新增配置方法，未预设的第三方组件可使用该函数
+
++ updateSort($name, $sort) //修改配置的排序
 
 + delete($name) //删除配置
 

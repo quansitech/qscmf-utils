@@ -35,6 +35,20 @@ class ConfigGenerator{
         return trim($group, PHP_EOL);
     }
 
+    static function getGroupId($group_name){
+        $group = DB::table('qs_config')->where('name', 'CONFIG_GROUP_LIST')->value('value');
+        $group_arr = self::strToArr($group);
+        collect($group_arr)->each(function($item, $index) use (&$group_id, $group_name){
+            if($item === $group_name){
+                $group_id = $index;
+            }
+        });
+        if(!$group_id){
+            E($group_name . " 分组不存在");
+        }
+        return $group_id;
+    }
+
     static function updateGroup($config_name, $group_name){
         $group = DB::table('qs_config')->where('name', 'CONFIG_GROUP_LIST')->value('value');
         $group_arr = self::strToArr($group);
@@ -101,6 +115,21 @@ class ConfigGenerator{
         
         $arr = ['name', 'type', 'title', 'group', 'extra', 'remark', 'create_time', 'update_time', 'status', 'value', 'sort'];
         DB::table('qs_config')->insert(compact($arr));
+
+        $process = new CmmProcess();
+        $process->setTimeOut(30)->callTp(LARA_DIR . '/../www/index.php', '/Qscmf/ConfigCache/clear');
+    }
+
+    static function updateSort($name, $sort){
+        $update_data['sort'] = $sort;
+
+        self::update($name, $update_data);
+    }
+
+    static function update($name, $update_data){
+        $update_data['update_time'] = time();
+
+        DB::table('qs_config')->where('name', $name)->update($update_data);
 
         $process = new CmmProcess();
         $process->setTimeOut(30)->callTp(LARA_DIR . '/../www/index.php', '/Qscmf/ConfigCache/clear');
