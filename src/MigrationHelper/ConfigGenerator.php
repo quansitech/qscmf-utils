@@ -44,7 +44,7 @@ class ConfigGenerator{
             }
         });
         if(!$group_id){
-            E($group_name . " 分组不存在");
+            throw new \Exception($group_name . " 分组不存在");
         }
         return $group_id;
     }
