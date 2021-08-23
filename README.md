@@ -57,6 +57,71 @@ composer require quansitech/qscmf-utils
 + delete($name) //删除配置
 
 ### MenuGenerate
+生成菜单和节点列表
+自动处理menu和node的关系
+
+#### 用法
++  生成top_menu为平台的菜单和节点列表
+```php
+$menu_data = [
+    '新闻中心'=> [
+              [
+                  'name'      => 'index',
+                  'title'     => '新闻分类',
+                  'controller'=> 'NewsCate',
+              ],
+              [
+                  'name'      => 'index',
+                  'title'     => '内容管理',
+                  'controller'=> 'News',
+                  'sort'      => 1,
+              ],
+    ],
+];
+
+$menuGenerate = new Qscmf\Utils\MigrationHelper\MenuGenerate();
+$menuGenerate->insertAll($this->nodeData);
+
+// 撤销
+$menuGenerate->insertAllRollback($this->nodeData);
+
+```
+
++ 生成自定义top_menu的菜单和节点列表
+```php
+$data = [
+            [
+                'title'      => '平台2', //标题              (必填)
+                'module'     => 'newsAdmin', //模块英文名        (必填)
+                'module_name'=> '后台管理', //模块中文名   (必填)
+                'url'        => '', //url                  (必填)
+                'type'       => '', //类型                (选填）
+                'sort'       => 0, //排序                (选填）
+                'icon'       => '', //icon                (选填）
+                'status'     => 1, //状态              (选填）
+                'top_menu'   => [
+                    '新闻中心'=> [
+                        [
+                            'name'      => 'index',       //（必填）
+                            'title'     => '测试新闻中心',    //（必填）'
+                            'controller'=> 'NewsController', //（必填）
+                            'sort'      => 1, //排序       //（选填）
+                            'icon'      => '', //图标        //（选填）
+                            'remark'    => '', //备注      //（选填）
+                            'status'    => 1, //状态        //（选填）
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+$menuGenerate = new Qscmf\Utils\MigrationHelper\MenuGenerate();
+$menuGenerate->insertNavigationAll($data);
+
+// 撤销
+$menuGenerate->insertNavigationAllRollback($data);
+```
+
 
 ### RefModel
 
@@ -179,4 +244,43 @@ IMAGEPROXY_REMOTE=http://www.test.com
 $url = \Qscmf\Utils\Libs\Common::imageproxy('1920x540',$banner_id);
 echo $url;
 //http://www.test.com/1920x540/http://localhost/Uploads/images/xxxx.jpg
+```
+
+### AuthNodeGenerate
+```text
+生成权限点
+
+使用权限点来限制字段、按钮的展示时，一般格式为：
+模块.控制器.方法名，如 admin.user.add
+```
+
+#### 用法
++ 新增权限点
+```php
+
+// 参数说明
+// $module_name 模块名
+// $controller_name 控制器名
+// $action_name 权限点名
+// $title 权限点标题
+// $pid 父节点，若为空则根据模块名、控制器名查找
+
+Qscmf\Utils\MigrationHelper\AuthNodeGenerate::addAuthNode('admin', 'user', 'add', '新增');
+Qscmf\Utils\MigrationHelper\AuthNodeGenerate::addAuthNode('admin', 'user', 'edit', '编辑');
+```
+
++ 删除权限点
+```php
+
+// 参数说明
+// $module_name 模块名
+// $controller_name 控制器名
+// $action_name 权限点名，若为空则删除该控制器下的所有权限点
+
+// 只删除一个权限点
+Qscmf\Utils\MigrationHelper\AuthNodeGenerate::deleteAuthNode('admin', 'user', 'add');
+Qscmf\Utils\MigrationHelper\AuthNodeGenerate::deleteAuthNode('admin', 'user', 'edit');
+
+// 删除控制器下所有权限点
+Qscmf\Utils\MigrationHelper\AuthNodeGenerate::deleteAuthNode('admin', 'user', '');
 ```
