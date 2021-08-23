@@ -256,6 +256,9 @@ echo $url;
 
 #### 用法
 + 新增权限点
+
+若模块、控制器不存在则自动新增，它们的标题默认为名称，可以根据需要自定义标题。
+
 ```php
 
 // 参数说明
@@ -267,6 +270,11 @@ echo $url;
 
 Qscmf\Utils\MigrationHelper\AuthNodeGenerate::addAuthNode('admin', 'user', 'add', '新增');
 Qscmf\Utils\MigrationHelper\AuthNodeGenerate::addAuthNode('admin', 'user', 'edit', '编辑');
+```
+
+```php
+// 修改模块、控制器标题
+Qscmf\Utils\MigrationHelper\AuthNodeGenerate::addAuthNode(['UserAdmin','用户'], ['user', '用户管理'], 'add', '新增');
 ```
 
 + 删除权限点
