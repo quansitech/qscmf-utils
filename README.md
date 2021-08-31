@@ -67,7 +67,7 @@ composer require quansitech/qscmf-utils
 #### 用法
 +  生成top_menu为平台的菜单和节点列表
 ```php
-$menu_data = [
+$this->nodeData = [
     '新闻中心'=> [
               [
                   'name'      => 'index',
