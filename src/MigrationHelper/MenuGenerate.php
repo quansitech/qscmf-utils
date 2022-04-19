@@ -102,15 +102,17 @@ class MenuGenerate
      */
     public function insert($menuData, $controlAction)
     {
-        $controller = [];
-
         try {
             $this->insertMenu($menuData);
             foreach ($controlAction as $item) {
+                $controller = [];
                 if (empty($item)) {
                     throw new \Exception('数据为空');
                 }
                 $controller['name'] = $item['controller'];
+                if(isset($item['controller_title']) && !empty($item['controller_title'])){
+                    $controller['title'] = $item['controller_title'];
+                }
                 if (!empty($this->module_id)) {
                     $controller['pid'] = $this->module_id;
                     $controller['menu_id'] = 0;
@@ -321,7 +323,7 @@ class MenuGenerate
         } else {
             throw new \Exception('控制器名为空请检查');
         }
-        $ControllerData['title'] = $ControllerData['name'];
+        $ControllerData['title'] = isset($data['title']) && !empty($data['title']) ? $data['title'] : $ControllerData['name'];
         $ControllerData['status'] = isset($data['status']) ? (int) $data['status'] : 1;
         $ControllerData['remark'] = isset($data['remark']) ? $data['remark'] : '';
         $ControllerData['sort'] = isset($data['sort']) ? (int) $data['sort'] : 0;
