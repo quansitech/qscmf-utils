@@ -126,6 +126,37 @@ $menuGenerate->insertNavigationAll($data);
 $menuGenerate->insertNavigationAllRollback($data);
 ```
 
++  通过controller_title字段可自定义控制器title，默认为controller
+```text
+controller为英文，对用户来说不太好理解，使用自定义中文说明更友好。
+```
+
+```php
+$this->nodeData = [
+    '新闻中心'=> [
+              [
+                  'name'      => 'index',
+                  'title'     => '新闻分类',
+                  'controller'=> 'NewsCate',
+                  'controller_title'=> '新闻分类管理',
+              ],
+              [
+                  'name'      => 'index',
+                  'title'     => '内容管理',
+                  'controller'=> 'News',
+                  'controller_title'=> '新闻管理',
+                  'sort'      => 1,
+              ],
+    ],
+];
+
+$menuGenerate = new Qscmf\Utils\MigrationHelper\MenuGenerate();
+$menuGenerate->insertAll($this->nodeData);
+
+// 撤销
+$menuGenerate->insertAllRollback($this->nodeData);
+
+```
 
 ### RefModel
 
