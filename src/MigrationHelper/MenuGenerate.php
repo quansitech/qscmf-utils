@@ -220,6 +220,7 @@ class MenuGenerate
             $firstData = DB::table('qs_node')->where('name', $data['name'])->where('level', 2)->where('pid', 1)->first();
         }
         if (!empty($firstData)) {
+            DB::table('qs_node')->where('id', $firstData->id)->update($data);
             $this->node_pid = $firstData->id;
         } else {
             $this->node_pid = DB::table('qs_node')->insertGetId($data);
