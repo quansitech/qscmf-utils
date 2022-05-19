@@ -1,49 +1,57 @@
-## qscmf辅助开发库
+# qscmf辅助开发库
 
 + 安装
-```php
-composer require quansitech/qscmf-utils
-```
+  
+  ```php
+  composer require quansitech/qscmf-utils
+  ```
 
-### CmmProcess
+## 
+
+## CmmProcess
 
 迁移中调用tp的脚本
 
 > 用法：
->
+> 
 > ```php
 > $process = new \Qscmf\Utils\MigrationHelper\CmmProcess();
 > //timeout为程序的超时退出时间，默认60秒
 > $process->setTimeOut(100)->callTp('/var/www/move/www/index.php', '/home/index/test');
 > ```
 
-### ConfigGenerator
-  
+## 
+
+
+
+## ConfigGenerator
+
 迁移中处理系统配置的工具类
 
 + addGroup($name) //添加配置分组 
-  
+
 + deleteGroup($name) //删除配置分组
 
 + updateGroup($config_name, $group_name)  //将配置转移到指定分组
 
 + getGroupId($group_name) //根据分组名获取分组id
-
+  
   以下为新增配置项的操作函数
+  
   > $name 配置名
-  >
+  > 
   > $title 配置标题
-  >
+  > 
   > $value 配置值
-  >
+  > 
   > $remark 配置说明
-  >
+  > 
   > $group 配置分组
-  >
+  > 
   > $sort 排序
-  
+
 + addNum($name, $title, $value, $remark = '', $group = 1, $sort = 0) //新增数字类型配置值 
-  
+
 + addText($name, $title, $value, $remark = '', $group = 1, $sort = 0) //新增字符类型配置值
 
 + addArray($name, $title, $value, $remark = '', $group = 1, $sort = 0) //新增数组类型配置值
@@ -60,28 +68,36 @@ composer require quansitech/qscmf-utils
 
 + delete($name) //删除配置
 
-### MenuGenerate
+## 
+
+
+
+## MenuGenerate
+
 生成菜单和节点列表
 自动处理menu和node的关系
 
 #### 用法
-+  生成top_menu为平台的菜单和节点列表
-```php
-$this->nodeData = [
-    '新闻中心'=> [
-              [
-                  'name'      => 'index',
-                  'title'     => '新闻分类',
-                  'controller'=> 'NewsCate',
-              ],
-              [
-                  'name'      => 'index',
-                  'title'     => '内容管理',
-                  'controller'=> 'News',
-                  'sort'      => 1,
-              ],
-    ],
-];
+
++ 生成top_menu为平台的菜单和节点列表
+  
+  ```php
+  $this->nodeData = [
+   '新闻中心'=> [
+             [
+                 'name'      => 'index',
+                 'title'     => '新闻分类',
+                 'controller'=> 'NewsCate',
+             ],
+             [
+                 'name'      => 'index',
+                 'title'     => '内容管理',
+                 'controller'=> 'News',
+                 'sort'      => 1,
+             ],
+   ],
+  ];
+  ```
 
 $menuGenerate = new Qscmf\Utils\MigrationHelper\MenuGenerate();
 $menuGenerate->insertAll($this->nodeData);
@@ -90,7 +106,6 @@ $menuGenerate->insertAll($this->nodeData);
 $menuGenerate->insertAllRollback($this->nodeData);
 
 ```
-
 + 生成自定义top_menu的菜单和节点列表
 ```php
 $data = [
@@ -126,10 +141,11 @@ $menuGenerate->insertNavigationAll($data);
 $menuGenerate->insertNavigationAllRollback($data);
 ```
 
-+  通过controller_title字段可自定义控制器title，默认为controller
-```text
-controller为英文，对用户来说不太好理解，使用自定义中文说明更友好。
-```
++ 通过controller_title字段可自定义控制器title，默认为controller
+  
+  ```text
+  controller为英文，对用户来说不太好理解，使用自定义中文说明更友好。
+  ```
 
 ```php
 $this->nodeData = [
@@ -155,38 +171,46 @@ $menuGenerate->insertAll($this->nodeData);
 
 // 撤销
 $menuGenerate->insertAllRollback($this->nodeData);
-
 ```
 
-### RefModel
+## 
+
+
+
+## RefModel
 
 从关联表预提取关联数组（解决N+1循环取数导致数据库频繁访问的问题）
 
 #### API
+
 1. fill($data_ents, $key, $extra_where = null)
-> 用处：给关联对象填充关联值
-> 
-> data_ents 关联数据源
-> 
-> key 从关联数据源提取关联表数据的键值
-> 
-> extra_where 附加查询条件
+   
+   > 用处：给关联对象填充关联值
+   > 
+   > data_ents 关联数据源
+   > 
+   > key 从关联数据源提取关联表数据的键值
+   > 
+   > extra_where 附加查询条件
 
 2. pick($value, $field = null, $callback = null)
-> 用处：从关联对象中提取值
->
-> value 关联数据源的对应数据，与fill方法的key对应
-> 
-> field 指定提取的字段，默认null，表示提取所有字段
->
-> callback 回调函数，接收一个参数，为关联数据中，field指定的数据， return 作为最终提取数据
+   
+   > 用处：从关联对象中提取值
+   > 
+   > value 关联数据源的对应数据，与fill方法的key对应
+   > 
+   > field 指定提取的字段，默认null，表示提取所有字段
+   > 
+   > callback 回调函数，接收一个参数，为关联数据中，field指定的数据， return 作为最终提取数据
 
 3. pickAll()
-> 用处： 从关联对象中提取全部数据
+   
+   > 用处： 从关联对象中提取全部数据
 
 #### 用法
 
 一般用法
+
 ```php
 $reader_ents = D("Reader")->where(['status' => 1])->select();
 $school_ref = new RefModel(D('School'), 'id'); //设置目标表的model类  设置目标表的关联id
@@ -198,6 +222,7 @@ foreach($reader_ents as &$v){
 ```
 
 高级用法
+
 ```php
 //通过传递闭包函数来获取更复杂的关联数据
 //如用一般用法只能获取到读者头像id对应的本地图片路径，如果还需要进一步获取imageproxy的代理地址，则可传递一个闭包函数实现
@@ -231,13 +256,19 @@ foreach($reader_ents as &$v){
 }
 ```
 
-### RedisLock
+## 
+
+
+
+## RedisLock
 
 基于Redis改造的悲观锁
+
 + 先获取锁再执行业务逻辑，执行结束释放锁。
 + 保证同一个方法的并发重复操作请求只有一个请求可以获取锁，在不进行高延迟事务处理的场景下可以使用。
 
 ##### lock
+
 ```blade
 该方法可以获取锁
 
@@ -252,6 +283,7 @@ $interval 取锁失败后重试间隔时间 单位为微秒，默认为100000
 ```
 
 ##### unlock
+
 ```blade
 该方法可以释放锁
 
@@ -261,7 +293,9 @@ $key 名称
 返回值
 释放锁的个数
 ```
+
 ##### 代码示例
+
 ```php
 public function execShell(){
     $redis_lock = \Qscmf\Utils\Libs\RedisLock::getInstance();
@@ -269,36 +303,46 @@ public function execShell(){
     $is_lock === false && $this->error('请一分钟后再操作');
 
     shell_exec('ll >/dev/null');
-    
+
     $redis_lock->unlock('exec_shell_lock_key');
 }
 ```
 
-### imageproxy
+## 
+
+
+
+## imageproxy
+
 [imageproxy](https://github.com/willnorris/imageproxy) 是个图片裁剪、压缩、旋转的图片代理服务。框架集成了imageproxy全局函数来处理图片地址的格式化，通过.env来配置地址格式来处理不同环境下imageproxy的不同配置参数
 
 + env的地址格式配置
-```blade
-IMAGEPROXY_URL={schema}://{domain}/ip/{options}/{remote_uri}
-```
+  
+  ```blade
+  IMAGEPROXY_URL={schema}://{domain}/ip/{options}/{remote_uri}
+  ```
+
 + 占位符替换规则
-```
-占位符用{}包裹
-schema 当前地址的协议类型 http 或者 https
-domain 当前网站使用的域名
-options 图片处理规则 https://godoc.org/willnorris.com/go/imageproxy#ParseOptions
-remote_uri 代理的图片uri，如果外网图片，该占位符会替换成该地址，否则是网站图片的uri
-path 网站图片的相对地址，如 http://localhost/Uploads/image/20190826/5d634f5f6570f.jpeg，path则为Uploads/image/20190826/5d634f5f6570f.jpeg
-```
+  
+  ```
+  占位符用{}包裹
+  schema 当前地址的协议类型 http 或者 https
+  domain 当前网站使用的域名
+  options 图片处理规则 https://godoc.org/willnorris.com/go/imageproxy#ParseOptions
+  remote_uri 代理的图片uri，如果外网图片，该占位符会替换成该地址，否则是网站图片的uri
+  path 网站图片的相对地址，如 http://localhost/Uploads/image/20190826/5d634f5f6570f.jpeg，path则为Uploads/image/20190826/5d634f5f6570f.jpeg
+  ```
 
 + imageproxy全局函数
-```php
-// imageproxy图片格式处理
-// options 图片处理规则
-// file_id 图片id，若为ulr，则返回该url, 也可以是file_pic的数据库行记录（省略数据库查询操作）
-// cache 默认为空，不开启缓存，否则可设置缓存时间，单位秒
-// return 返回与.env配置格式对应的图片地址
-\Qscmf\Utils\Libs\Common::imageproxy($options, $file_id, $cache)
+  
+  ```php
+  // imageproxy图片格式处理
+  // options 图片处理规则
+  // file_id 图片id，若为ulr，则返回该url, 也可以是file_pic的数据库行记录（省略数据库查询操作）
+  // cache 默认为空，不开启缓存，否则可设置缓存时间，单位秒
+  // return 返回与.env配置格式对应的图片地址
+  \Qscmf\Utils\Libs\Common::imageproxy($options, $file_id, $cache)
+  ```
 
 如 IMAGEPROXY_URL={schema}://{domain}/ip/{options}/{remote_uri}
 \Qscmf\Utils\Libs\Common::imageproxy('100x150', 1)
@@ -306,8 +350,8 @@ path 网站图片的相对地址，如 http://localhost/Uploads/image/20190826/5
 
 如 IMAGEPROXY_URL={schema}://{domain}/ip/{options}/{path} (这种格式通常配合imageproxy -baseURL使用)
 返回地址 http://localhost/ip/100x150/Uploads/image/20190826/5d634f5f6570f.jpeg
-```
 
+```
 + 远程imageproxy代理
 
 有些项目，需要采用远程的一台服务器作为图片代理服务，此时可通过在.env设置IMAGEPROXY_REMOTE来设置远程服务器的域名
@@ -322,7 +366,12 @@ echo $url;
 //http://www.test.com/1920x540/http://localhost/Uploads/images/xxxx.jpg
 ```
 
-### AuthNodeGenerate
+## 
+
+
+
+## AuthNodeGenerate
+
 ```text
 生成权限点
 
@@ -331,12 +380,12 @@ echo $url;
 ```
 
 #### 用法
+
 + 新增权限点
 
 若模块、控制器不存在则自动新增，它们的标题默认为名称，可以根据需要自定义标题。
 
 ```php
-
 // 参数说明
 // $module_name 模块名
 // $controller_name 控制器名
@@ -354,7 +403,10 @@ Qscmf\Utils\MigrationHelper\AuthNodeGenerate::addAuthNode(['UserAdmin','用户']
 ```
 
 + 删除权限点
-```php
+  
+  ```php
+  
+  ```
 
 // 参数说明
 // $module_name 模块名
@@ -367,4 +419,7 @@ Qscmf\Utils\MigrationHelper\AuthNodeGenerate::deleteAuthNode('admin', 'user', 'e
 
 // 删除控制器下所有权限点
 Qscmf\Utils\MigrationHelper\AuthNodeGenerate::deleteAuthNode('admin', 'user', '');
+
+```
+
 ```
