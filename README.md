@@ -22,8 +22,6 @@
 
 ## 
 
-
-
 ## ConfigGenerator
 
 迁移中处理系统配置的工具类
@@ -69,8 +67,6 @@
 + delete($name) //删除配置
 
 ## 
-
-
 
 ## MenuGenerate
 
@@ -175,8 +171,6 @@ $menuGenerate->insertAllRollback($this->nodeData);
 
 ## 
 
-
-
 ## RefModel
 
 从关联表预提取关联数组（解决N+1循环取数导致数据库频繁访问的问题）
@@ -258,8 +252,6 @@ foreach($reader_ents as &$v){
 
 ## 
 
-
-
 ## RedisLock
 
 基于Redis改造的悲观锁
@@ -309,8 +301,6 @@ public function execShell(){
 ```
 
 ## 
-
-
 
 ## imageproxy
 
@@ -368,8 +358,6 @@ echo $url;
 
 ## 
 
-
-
 ## AuthNodeGenerate
 
 ```text
@@ -403,11 +391,8 @@ Qscmf\Utils\MigrationHelper\AuthNodeGenerate::addAuthNode(['UserAdmin','用户']
 ```
 
 + 删除权限点
-  
-  ```php
-  
-  ```
 
+```php
 // 参数说明
 // $module_name 模块名
 // $controller_name 控制器名
@@ -416,10 +401,9 @@ Qscmf\Utils\MigrationHelper\AuthNodeGenerate::addAuthNode(['UserAdmin','用户']
 // 只删除一个权限点
 Qscmf\Utils\MigrationHelper\AuthNodeGenerate::deleteAuthNode('admin', 'user', 'add');
 Qscmf\Utils\MigrationHelper\AuthNodeGenerate::deleteAuthNode('admin', 'user', 'edit');
-
-// 删除控制器下所有权限点
-Qscmf\Utils\MigrationHelper\AuthNodeGenerate::deleteAuthNode('admin', 'user', '');
-
 ```
 
+```php
+// 删除控制器下所有权限点
+Qscmf\Utils\MigrationHelper\AuthNodeGenerate::deleteAuthNode('admin', 'user', '');
 ```
