@@ -8,17 +8,21 @@
 
 namespace Qscmf\Utils\Libs;
 
+use Illuminate\Support\Str;
 use Think\Cache;
 
 class RedisLock
 {
     protected $redis;
 
+    protected $uuid;
+
     private static $_instance = [];
 
     public function __construct($config = [])
     {
         $this->redis = Cache::getInstance('redis', $config);
+        $this->uuid = Str::uuid();
     }
 
 
@@ -49,28 +53,31 @@ class RedisLock
      * @return bool             锁成功返回true 锁失败返回false
      */
     public function lock($key, int $expire, int $timeout = 0, int $interval = 100000){
-        $key = $this->redis->getOptions('prefix').$key;
         $start_time = time();
 
         while (true){
-            $is_lock = $this->redis->setnx($key, time()+$expire);
-            if (!$is_lock){
-                $current_expire = $this->redis->get($key);
-                if ($this->isTimeExpired($current_expire)){
-                    $old_expire = $this->redis->getSet($key, time()+$expire);
-                    if ($this->isTimeExpired($old_expire)){
-                        $this->redis->expire($key, 86400);
-                        return true;
-                    }
-                }
-            }else{
-                $this->redis->expire($key, 86400);
+            $is_lock = $this->redis->set($key, $this->uuid, $expire, 'nx');
+            if ($is_lock){
                 return true;
             }
 
             if ($timeout <= 0 || $start_time+$timeout < microtime(true)) break;
             usleep($interval);
         }
+        return false;
+    }
+
+    //等待锁，但不会上锁
+    public function waitLock(string $key, int $timeout = 10, int $interval = 100000) : bool{
+        $start_time = time();
+        while(true){
+            if(!$this->redis->get($key)){
+                return true;
+            }
+            if ($timeout <= 0 || $start_time+$timeout < microtime(true)) break;
+            usleep($interval);
+        }
+
         return false;
     }
 
@@ -90,12 +97,15 @@ class RedisLock
      * 释放锁
      *
      * @param $key  string|array    名称
-     * @return int                  释放锁的个数
+     * @return int | boolean               释放锁的个数
+     *  false表示释放失败
      */
     public function unlock($key){
-        $key = $this->redis->getOptions('prefix').$key;
-
-        return $this->redis->del($key);
+        $value = $this->redis->get($key);
+        if($value === $this->uuid){
+            return $this->redis->del($key);
+        }
+        return false;
     }
 
     /**
