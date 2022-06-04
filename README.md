@@ -302,6 +302,70 @@ public function execShell(){
 
 ## 
 
+## 共享排他锁
+
+排他锁一般是基于某个key，只有一个进程可以持有。与其他的key的锁毫不相关。但有些业务场景，如基金配捐业务，基金有可配捐总额，为了避免并发问题，产生超出上总额的配捐数据，会对基金id上排他锁。平台也有个日配捐上限的设置，所有配捐共享这个上限值。如果此时管理员去修改日配捐上限，安全的做法应该要上一个配捐的总锁，避免在修改的过程中刚好有配捐业务导致数据错乱。此时这个总锁就要求和各个基金锁存在排他关系才能满足需求。共享排他锁就是为了满足这种需求而产生的工具。
+
+
+
+#### API
+
+```php
+//排他锁
+$lock = new ExclusiveLock(string $key, in $expire = 5, int $timeout = 0)
+
+//上锁
+$lock->lock();
+
+//解锁
+$lock->unlock();
+
+//注册共享锁
+$lock->register(SharedLock $lock);
+
+
+//共享锁
+$share_lock = new SharedLock(string $key, int $type = self::TYPE_SHARED);
+```
+
+
+
+#### 用法
+
+```php
+//创建排他锁
+$all_lock = new ExclusiveLock('all_lock', 3600);
+//注册共享锁，并且该锁是独占类型。意思只要该排他锁生成，其余用了相同key的共享锁则不能产生
+$all_lock->register(new SharedLock('single_lock', SharedLock::TYPE_EXCLUSIVE));
+$all_lock->lock();
+sleep(10);
+$all_lock->unlock();
+
+
+//创建排他锁2
+$fund_lock = new ExclusiveLock('single_lock_1', 3600);
+//注册共享类型的共享锁，意思是相同key的共享类型共享锁可以存在多个，但和独占类型的共享锁互斥
+$fund_lock->register(new SharedLock('single_lock', SharedLock::TYPE_SHARED));
+$fund_lock->lock();
+sleep(10);
+$fund_lock->unlock();
+
+//创建排他锁3
+$fund_lock = new ExclusiveLock('single_lock_2', 3600);
+$fund_lock->register(new SharedLock('single_lock', SharedLock::TYPE_SHARED));
+$fund_lock->lock();
+sleep(10);
+$fund_lock->unlock();
+```
+
+简单说明下上面的代码，当all_lock类型的锁产生后，由于该锁同时持有独占类型的single_lock。那么single_lock_1和single_lock_2创建时将会发生堵塞，直到all_lock释放为止。反过来，如果single_lock_1先生成了，那么all_lock创建时也会发生堵塞。
+
+single_lock_1和single_lock_2由于持有single_lock的共享类型锁，所以它们之间不会发生堵塞。
+
+
+
+
+
 ## imageproxy
 
 [imageproxy](https://github.com/willnorris/imageproxy) 是个图片裁剪、压缩、旋转的图片代理服务。框架集成了imageproxy全局函数来处理图片地址的格式化，通过.env来配置地址格式来处理不同环境下imageproxy的不同配置参数
