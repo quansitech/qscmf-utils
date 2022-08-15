@@ -22,7 +22,7 @@ class RedisLock
     public function __construct($config = [])
     {
         $this->redis = Cache::getInstance('redis', $config);
-        $this->uuid = Str::uuid();
+        $this->uuid = Str::uuid()->toString();
     }
 
 
