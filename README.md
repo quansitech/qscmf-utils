@@ -258,6 +258,12 @@ foreach($reader_ents as &$v){
 
 + 先获取锁再执行业务逻辑，执行结束释放锁。
 + 保证同一个方法的并发重复操作请求只有一个请求可以获取锁，在不进行高延迟事务处理的场景下可以使用。
++ 若只要一次获取锁成功，其它等待的请求可以通过callback处理，提前退出
+  + ```text
+    情景举例
+    接口返回的数据使用了缓存，当发生缓存雪崩时，大量的请求就会直接发送到MySql，会导致MySql压力过大，响应缓慢。
+    解决方案是，在发生缓存雪崩时，使用悲观锁，只有一个请求能从MySql中获取数据，设置好缓存值后，其它请求不需要获取锁，直接返回缓存值即可。
+    ```
 
 ##### lock
 
@@ -269,6 +275,8 @@ $key 名称
 $expire 过期时间 单位为秒
 $timeout  循环取锁时间 单位为秒，默认为0
 $interval 取锁失败后重试间隔时间 单位为微秒，默认为100000
+callback  若回调返回有效值，则提前退出取锁流程
+          回调返回数据类型为数组，[$flag,$result]，若$flag为true，则返回$res，否则继续执行取锁流程
 
 返回值
 锁成功返回true 锁失败返回false
@@ -297,6 +305,95 @@ public function execShell(){
     shell_exec('ll >/dev/null');
 
     $redis_lock->unlock('exec_shell_lock_key');
+}
+
+// 使用callback的示例
+public function getRes(){
+    $cache_data = S("api_cache_data");
+    if(!$cache_data){
+        $redis_lock_cls = new RedisLock();
+        $gen_lock_or_cache = $redis_lock_cls->lock($this->genLockKey(),30,30, 100000, [$this,"fetchCacheData"]);
+        if ($gen_lock_or_cache === false){
+            $res = ['info' => "系统繁忙，请稍后再试", 'status' => 0];
+        }elseif($gen_lock_or_cache === true){
+            // 业务逻辑           
+            $data = []; // 获取数据库数据
+            $res = ['info' => "成功", 'status' => 1, 'data' => $data];
+            S("api_cache_data", json_encode($res));
+            $redis_lock_cls->unlock($this->genLockKey());
+        }else{
+            $res = $gen_lock_or_cache;
+        }
+    }else{
+        $res = $cache_data;
+    }
+
+    return $res;
+}
+
+protected function genLockKey():string{
+    return 'api_redis_lock';
+}
+
+public function fetchCacheData(){
+    $data = S("api_cache_data");
+    $flag = is_array($data)
+    return [$flag, $data];
+}
+
+```
+
+##### lockWithCallback
+```blade
+回调值无效则取锁
+
+参数 
+key       名称
+expire    过期时间 单位为秒
+callback  若回调返回有效值，则提前退出取锁流程
+           回调返回数据类型为数组，[$flag,$result]，若$flag为true，则返回$result，否则继续执行取锁流程
+timeout   循环取锁时间 单位为秒
+interval  取锁失败后重试间隔时间 单位为微秒
+
+返回值为数组
+第一个值为锁情况，锁成功返回true 锁失败返回false，若不存在则为null
+第二个值为回调返回值，若不存在则为null
+两个值只会存在其中一种
+```
+##### 代码示例
+
+```php
+public function getRes(){
+    $cache_data = S("api_cache_data");
+    if(!$cache_data){
+        $redis_lock_cls = new RedisLock();
+        list($is_lock, $cache_data) = $redis_lock_cls->lockWithCallback($this->genLockKey(),30, [$this,"fetchCacheData"],30, 100000);
+        if ($is_lock === false){
+            $res = ['info' => "系统繁忙，请稍后再试", 'status' => 0];
+        }elseif($is_lock === true){
+            // 业务逻辑           
+            $data = []; // 获取数据库数据
+            $res = ['info' => "成功", 'status' => 1, 'data' => $data];
+            S("api_cache_data", json_encode($res));
+            $redis_lock_cls->unlock($this->genLockKey());
+        }else{
+            $res = $cache_data;
+        }
+    }else{
+        $res = $cache_data;
+    }
+
+    return $res;
+}
+
+protected function genLockKey():string{
+    return 'api_redis_lock';
+}
+
+public function fetchCacheData(){
+    $data = S("api_cache_data");
+    $flag = is_array($data)
+    return [$flag, $data];
 }
 ```
 

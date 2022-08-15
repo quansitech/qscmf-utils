@@ -67,6 +67,39 @@ class RedisLock
         return false;
     }
 
+    /**
+     *
+     * 回调值无效则取锁
+     *
+     * @param $key      string  名称
+     * @param $expire   int     过期时间 单位为秒
+     * @param $callback callable   若回调返回有效值，则提前退出取锁流程
+     *                             回调返回数据类型为数组，[$flag,$result]，若$flag为true，则返回$result，否则继续执行取锁流程
+     * @param $timeout  int     循环取锁时间 单位为秒
+     * @param $interval int     取锁失败后重试间隔时间 单位为微秒
+     * @return array            第一个值为锁情况，锁成功返回true 锁失败返回false，若不存在则为null
+     *                          第二个值为回调返回值，若不存在则为null
+     *                          两个值只会存在其中一种
+     */
+    public function lockWithCallback(string $key, int $expire, callable $callback, int $timeout = 0, int $interval = 100000):array{
+        $start_time = time();
+
+        while (true){
+            list($flag, $res) = call_user_func($callback);
+            if ($flag === true){
+                return [null, $res];
+            }
+            $is_lock = $this->redis->set($key, $this->uuid, $expire, 'nx');
+            if ($is_lock){
+                return [true, null];
+            }
+
+            if ($timeout <= 0 || $start_time+$timeout < microtime(true)) break;
+            usleep($interval);
+        }
+        return [false, null];
+    }
+
     //等待锁，但不会上锁
     public function waitLock(string $key, int $timeout = 10, int $interval = 100000) : bool{
         $start_time = time();
