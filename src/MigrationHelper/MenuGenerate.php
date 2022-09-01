@@ -237,15 +237,13 @@ class MenuGenerate
         $map = [];
         //如果一下数据在数据库的某条记录中已经存在，则认为重复了
         $map['name'] = $data['name'];
-        $map['title'] = $data['title'];
         $map['level'] = $data['level'];
         $map['pid'] = $data['pid'];
-        $map['menu_id'] = $data['menu_id'];
         //查重
         $repeat = DB::table('qs_node')->where($map)->first();
-        //重复直接返回
         if (!empty($repeat)) {
-            return true;
+            DB::table('qs_node')->where('id', $repeat->id)->update($data);
+            return $repeat->id;
         }
         $id = DB::table('qs_node')->insertGetId($data);
         if (empty($id)) {
