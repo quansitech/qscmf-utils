@@ -18,7 +18,20 @@ class ExclusiveLock extends BaseLock {
     public function lock() : bool{
         $start_time = time();
         while (true){
-            $is_lock = self::$redis->eval($this->lockLua());
+            // keys1 share_share_type_lock_key
+            // keys2 share_exclusive_type_lock_key
+            // keys3 exclusive_lock_key
+            // argv1 expire
+            // argv2 share_lock_uuid
+            // argv3 exclusive_lock_uuid
+            $is_lock = self::$redis->eval($this->lockLua(), [
+                $this->shared_lock->getKey(SharedLock::TYPE_SHARED),
+                $this->shared_lock->getKey(SharedLock::TYPE_EXCLUSIVE),
+                $this->key,
+                $this->expire,
+                $this->shared_lock->getUuid(),
+                $this->uuid
+            ], 3);
             if ($is_lock){
                 return true;
             }
@@ -33,13 +46,26 @@ class ExclusiveLock extends BaseLock {
         $unlock = $this->shared_lock ? $this->shared_lock->unlockLua() : '';
         $lua = <<<LUA
 {$unlock}
-local uuid = redis.call('get', '{$this->key}')
-if uuid == "{$this->uuid}" then
-    redis.call('del', '{$this->key}')
+local uuid = redis.call('get', KEYS[3])
+if uuid == ARGV[3] then
+    redis.call('del', KEYS[3])
 end
 LUA;
 
-        self::$redis->eval($lua);
+        // keys1 share_share_type_lock_key
+        // keys2 share_exclusive_type_lock_key
+        // keys3 exclusive_lock_key
+        // argv1 expire
+        // argv2 share_lock_uuid
+        // argv3 exclusive_lock_uuid
+        self::$redis->eval($lua, [
+            $this->shared_lock->getKey(SharedLock::TYPE_SHARED),
+            $this->shared_lock->getKey(SharedLock::TYPE_EXCLUSIVE),
+            $this->key,
+            $this->expire,
+            $this->shared_lock->getUuid(),
+            $this->uuid
+        ], 3);
     }
 
     public function register(SharedLock $lock) : self{
@@ -54,7 +80,7 @@ LUA;
         $lua = <<<LUA
 {$check}
 {$lock}
-local is_lock = redis.call('set', '{$this->key}', '{$this->uuid}', 'EX', {$this->expire}, 'NX')
+local is_lock = redis.call('set', KEYS[3], ARGV[3], 'EX', ARGV[1], 'NX')
 if is_lock then
     return 1
 else

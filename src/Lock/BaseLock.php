@@ -18,4 +18,8 @@ class BaseLock{
         $this->uuid = Str::uuid();
     }
 
+    public function getUuid(){
+        return $this->uuid;
+    }
+
 }

@@ -6,8 +6,8 @@ class SharedLock extends BaseLock{
     const TYPE_EXCLUSIVE = 1;
     const TYPE_SHARED = 2;
     protected $type;
-    protected $shared_key_suffix = 'shared_lock_';
-    protected $exclusive_key_suffix = 'exclusive_lock_';
+    protected $shared_key_suffix = '_shared_lock';
+    protected $exclusive_key_suffix = '_exclusive_lock';
 
     public function __construct(string $key, int $type = self::TYPE_SHARED){
         parent::__construct($key);
@@ -22,10 +22,10 @@ class SharedLock extends BaseLock{
         };
     }
 
-    public function lockLua(int $expired = 5): string{
+    public function lockLua(): string{
         return match($this->type){
-            self::TYPE_SHARED => $this->lockSharedLua($expired),
-            self::TYPE_EXCLUSIVE => $this->lockExclusiveLua($expired)
+            self::TYPE_SHARED => $this->lockSharedLua(),
+            self::TYPE_EXCLUSIVE => $this->lockExclusiveLua()
         };
     }
 
@@ -37,38 +37,40 @@ class SharedLock extends BaseLock{
     }
 
     protected function unlockSharedLua(): string{
-        $key = $this->key . $this->shared_key_suffix;
         return <<<LUA
-redis.call('srem', '{$key}', '{$this->uuid}')
+redis.call('srem',KEYS[1], ARGV[2])
 LUA;
     }
 
     protected function unlockExclusiveLua() : string
     {
-        $key = $this->key . $this->exclusive_key_suffix;
         return <<<LUA
-local exclusive_lock_uuid = redis.call('get', '{$key}')
-if exclusive_lock_uuid == "{$this->uuid}" then
-    redis.call('del', '{$key}')
+local exclusive_lock_uuid = redis.call('get', KEYS[2])
+if exclusive_lock_uuid == ARGV[2] then
+    redis.call('del', KEYS[2])
 end
 LUA;
-
     }
 
-    protected function lockSharedLua(int $expired): string
+    public function getKey(int $type) : string{
+        return match($type) {
+            self::TYPE_SHARED => $this->key . $this->shared_key_suffix,
+            self::TYPE_EXCLUSIVE => $this->key . $this->exclusive_key_suffix
+        };
+    }
+
+    protected function lockSharedLua(): string
     {
-        $key = $this->key . $this->shared_key_suffix;
         return <<<LUA
-redis.call('sadd', '{$key}', '{$this->uuid}')
-redis.call('expire', '{$key}', {$expired})
+redis.call('sadd', KEYS[1], ARGV[2])
+redis.call('expire', KEYS[1], ARGV[1])
 LUA;
     }
 
-    protected function lockExclusiveLua(int $expired): string
+    protected function lockExclusiveLua(): string
     {
-        $key = $this->key . $this->exclusive_key_suffix;
         return <<<LUA
-redis.call('set', '{$key}', '{$this->uuid}', 'EX', {$expired})
+redis.call('set', KEYS[2], ARGV[2], 'EX', ARGV[1])
 LUA;
     }
 
@@ -76,9 +78,8 @@ LUA;
 
     protected function checkSharedLua() : string
     {
-        $key = $this->key . $this->exclusive_key_suffix;
         return <<<LUA
-local exclusive_lock = redis.call('get', '{$key}')
+local exclusive_lock = redis.call('get', KEYS[2])
 if exclusive_lock then
     return 0
 end
@@ -87,9 +88,8 @@ LUA;
 
     protected function checkExclusiveLua() : string
     {
-        $key = $this->key . $this->shared_key_suffix;
         return <<<LUA
-local shared_lock_count = redis.call('scard', '{$key}')
+local shared_lock_count = redis.call('scard', KEYS[1])
 if shared_lock_count > 0 then
     return 0
 end
