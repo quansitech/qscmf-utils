@@ -93,13 +93,14 @@
              ],
    ],
   ];
+  
+  $menuGenerate = new Qscmf\Utils\MigrationHelper\MenuGenerate();
+  $menuGenerate->insertAll($this->nodeData);
+
+  // 撤销
+  $menuGenerate->insertAllRollback($this->nodeData);
   ```
 
-$menuGenerate = new Qscmf\Utils\MigrationHelper\MenuGenerate();
-$menuGenerate->insertAll($this->nodeData);
-
-// 撤销
-$menuGenerate->insertAllRollback($this->nodeData);
 
 ```
 + 生成自定义top_menu的菜单和节点列表
