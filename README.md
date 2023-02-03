@@ -307,41 +307,6 @@ public function execShell(){
 
     $redis_lock->unlock('exec_shell_lock_key');
 }
-
-// 使用callback的示例
-public function getRes(){
-    $cache_data = S("api_cache_data");
-    if(!$cache_data){
-        $redis_lock_cls = new RedisLock();
-        $gen_lock_or_cache = $redis_lock_cls->lock($this->genLockKey(),30,30, 100000, [$this,"fetchCacheData"]);
-        if ($gen_lock_or_cache === false){
-            $res = ['info' => "系统繁忙，请稍后再试", 'status' => 0];
-        }elseif($gen_lock_or_cache === true){
-            // 业务逻辑           
-            $data = []; // 获取数据库数据
-            $res = ['info' => "成功", 'status' => 1, 'data' => $data];
-            S("api_cache_data", json_encode($res));
-            $redis_lock_cls->unlock($this->genLockKey());
-        }else{
-            $res = $gen_lock_or_cache;
-        }
-    }else{
-        $res = $cache_data;
-    }
-
-    return $res;
-}
-
-protected function genLockKey():string{
-    return 'api_redis_lock';
-}
-
-public function fetchCacheData(){
-    $data = S("api_cache_data");
-    $flag = is_array($data)
-    return [$flag, $data];
-}
-
 ```
 
 ##### lockWithCallback
