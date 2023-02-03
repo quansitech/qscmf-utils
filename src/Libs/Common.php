@@ -49,4 +49,31 @@ class Common{
 
         return $format;
     }
+
+    static function cached(callable $function, int $expire = 0){
+        $r = new \ReflectionFunction($function);
+        $fuc_footprint = md5('f_' . $r->getFileName() . '_s_' . $r->getStartLine() . '_e_' . $r->getEndLine());
+        return function() use($function, $fuc_footprint, $expire) {
+            $args = func_get_args();
+            $key = md5($fuc_footprint . '_k_' . serialize($args));
+            $cache_data = S($key);
+            if (!$cache_data) {
+                $redis_lock_cls = new RedisLock();
+                list($is_lock, $cache_data) = $redis_lock_cls->lockWithCallback($key, $expire, function () use ($key) {
+                    $data = S($key);
+                    return [!!$data, $data];
+                }, 30, 100000);
+
+                if ($is_lock === false) {
+                    throw new CachedFailureException('cached failure');
+                } else if ($is_lock === true) {
+                    $cache_data = call_user_func_array($function, $args);
+                    S($key, $cache_data, $expire);
+                    $redis_lock_cls->unlock($key);
+                }
+
+            }
+            return $cache_data;
+        };
+    }
 }

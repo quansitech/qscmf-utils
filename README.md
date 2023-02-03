@@ -483,7 +483,34 @@ echo $url;
 //http://www.test.com/1920x540/http://localhost/Uploads/images/xxxx.jpg
 ```
 
-## 
+## Common 公用函数
+
++ imageproxy
+见imageproxy部分
+
++ cached
+开箱即用的缓存工具，内部实现防缓存雪崩机制
+```php
+//参数说明
+//第一个参数为匿名函数，实现获取数据的业务逻辑
+//第二个参数为缓存过期时间，单位秒
+
+//用法举例
+//以下方法要从数据库读取数据，如果该页面是热点页，则无法承载太多的并发请求，需要针对其进行缓存
+$ent = D('Project')->getOneProject($map);
+
+//使用Common::cached方法快速实现该工作
+//以下为改造后效果
+//生成缓存函数便于重复使用
+$project_cached = Common::cached(function($map){
+    $ent = D('Project')->getOneProject($map);
+    return $ent;
+}, 60);
+
+//使用生成的缓存函数完成数据获取和缓存的工作
+$ent = $project_cached($map);
+```
+
 
 ## AuthNodeGenerate
 
