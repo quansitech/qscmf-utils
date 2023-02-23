@@ -56,10 +56,11 @@ class Common{
         return function() use($function, $fuc_footprint, $expire) {
             $args = func_get_args();
             $key = md5($fuc_footprint . '_k_' . serialize($args));
+            $lock_key = $key . '_lock';
             $cache_data = S($key);
-            if (!$cache_data) {
+            if ($cache_data === false) {
                 $redis_lock_cls = new RedisLock();
-                list($is_lock, $cache_data) = $redis_lock_cls->lockWithCallback($key, $expire, function () use ($key) {
+                list($is_lock, $cache_data) = $redis_lock_cls->lockWithCallback($lock_key, $expire, function () use ($key) {
                     $data = S($key);
                     return [!!$data, $data];
                 }, 30, 100000);
@@ -68,12 +69,12 @@ class Common{
                     throw new CachedFailureException('cached failure');
                 } else if ($is_lock === true) {
                     $cache_data = call_user_func_array($function, $args);
+                    $cache_data = $cache_data === null ? PHP_NULL : $cache_data;
                     S($key, $cache_data, $expire);
-                    $redis_lock_cls->unlock($key);
+                    $redis_lock_cls->unlock($lock_key);
                 }
 
             }
             return $cache_data;
         };
-    }
 }
