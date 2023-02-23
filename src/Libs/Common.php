@@ -50,10 +50,11 @@ class Common{
         return $format;
     }
 
-    static function cached(callable $function, int $expire = 0){
+    static function cached(callable $function, int $expire = 0)
+    {
         $r = new \ReflectionFunction($function);
         $fuc_footprint = md5('f_' . $r->getFileName() . '_s_' . $r->getStartLine() . '_e_' . $r->getEndLine());
-        return function() use($function, $fuc_footprint, $expire) {
+        return function () use ($function, $fuc_footprint, $expire) {
             $args = func_get_args();
             $key = md5($fuc_footprint . '_k_' . serialize($args));
             $lock_key = $key . '_lock';
@@ -77,4 +78,5 @@ class Common{
             }
             return $cache_data;
         };
+    }
 }
