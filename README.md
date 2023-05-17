@@ -693,5 +693,7 @@ Qscmf\Utils\MigrationHelper\AuthNodeGenerate::deleteAuthNode('admin', 'user', ''
     // $comment_mapping = [];
   
     \Qscmf\Utils\MigrationHelper\DBComment::buildChangeSql($ddl_path, $comment_mapping);
+    
+    // 输出结果同上
      ```
 
