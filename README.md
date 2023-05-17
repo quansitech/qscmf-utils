@@ -611,7 +611,7 @@ $comment_mapping = [
 
 \Qscmf\Utils\MigrationHelper\DBComment::buildChangeSql($comment_mapping);
 
-// 输出结果为，可使用information_schema.columns数据表核对字段定义部分
+// 输出结果为一下内容，可使用information_schema.columns数据表核对字段定义部分
 /**
 ALTER TABLE
     `migrations` COMMENT = '数据迁移表',
