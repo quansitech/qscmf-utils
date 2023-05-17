@@ -639,6 +639,25 @@ Qscmf\Utils\MigrationHelper\AuthNodeGenerate::deleteAuthNode('admin', 'user', ''
     ];
   
     \Qscmf\Utils\MigrationHelper\DBComment::buildChangeSql($ddl, $comment_mapping);
+  
+    // 输出结果为
+    /**
+    ALTER TABLE
+    `migrations` COMMENT = '数据迁移表',
+    CHANGE COLUMN `id` `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '流水号，主键',
+    CHANGE COLUMN `migration` `migration` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '文件名',
+    CHANGE COLUMN `before` `before` TINYINT(1) NOT NULL DEFAULT '0' COMMENT '运行前执行情况',
+    CHANGE COLUMN `run` `run` TINYINT(1) NOT NULL DEFAULT '0' COMMENT '脚本执行情况',
+    CHANGE COLUMN `after` `after` TINYINT(1) NOT NULL DEFAULT '0' COMMENT '运行前执行情况',
+    CHANGE COLUMN `batch` `batch` INT(11) NOT NULL COMMENT '批次';
+  
+    ALTER TABLE
+    `qs_access` COMMENT = '用户组关联权限点表',
+    CHANGE COLUMN `role_id` `role_id` SMALLINT(6) UNSIGNED NOT NULL COMMENT '用户组id,qs_role主键',
+    CHANGE COLUMN `node_id` `node_id` SMALLINT(6) UNSIGNED NOT NULL COMMENT '权限点id,qs_node主键',
+    CHANGE COLUMN `level` `level` TINYINT(1) NOT NULL COMMENT '权限点类型',
+    CHANGE COLUMN `module` `module` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '权限点名称';
+    **/
      ```
 + 使用文件路径，需返回DDL字符串
     ```php
