@@ -49,7 +49,7 @@ select TABLE_NAME,COLUMN_NAME,COLUMN_TYPE,
        IF(ISNULL(CHARACTER_SET_NAME),'',concat(' CHARACTER SET ',CHARACTER_SET_NAME)) CHARACTER_SET_NAME,
        IF(ISNULL(COLLATION_NAME),'',concat(' COLLATE ',COLLATION_NAME)) COLLATION_NAME ,
        IF(IS_NULLABLE = 'NO', ' NOT NULL ', '') IS_NULLABLE ,
-       IF(ISNULL(COLUMN_DEFAULT), '', CONCAT(' DEFAULT ', IF(COLUMN_DEFAULT !='',COLUMN_DEFAULT,"''"))) COLUMN_DEFAULT ,
+       IF(ISNULL(COLUMN_DEFAULT), IF(IS_NULLABLE='YES',' DEFAULT NULL ',''), CONCAT(' DEFAULT ', IF(COLUMN_DEFAULT !='',COLUMN_DEFAULT,"''"))) COLUMN_DEFAULT ,
        COLUMN_COMMENT,
        EXTRA 
 FROM information_schema.COLUMNS
@@ -70,6 +70,10 @@ SQL;
 
             $definition = '';
             foreach ($item_temp as  $key=>$v){
+                $fn = 'parse'.ucfirst(strtolower($key));
+                if ($v && method_exists(\Qscmf\Utils\Libs\DBComment::class, $fn)){
+                    $v = self::$fn($v);
+                }
                 $definition .= $v;
             }
             $table_list[$item->TABLE_NAME][$item->COLUMN_NAME] = [
@@ -80,6 +84,14 @@ SQL;
         });
 
         return $table_list;
+    }
+
+    static protected function parseExtra(string $extra):string{
+        if (substr($extra, 0,'17') === 'DEFAULT_GENERATED'){
+            return substr($extra, 18);
+        }else{
+            return $extra;
+        }
     }
 
     static protected function combineDDLList(array $table):array{
