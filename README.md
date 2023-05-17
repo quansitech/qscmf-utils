@@ -574,126 +574,58 @@ Qscmf\Utils\MigrationHelper\AuthNodeGenerate::deleteAuthNode('admin', 'user', ''
 根据给定的DDL和注释映射数组生成一个更改DDL语句的SQL语句
 ```
 ```php
-\Qscmf\Utils\Libs\DBComment::buildChangeSql($ddl, $comment_mapping);
+\Qscmf\Utils\Libs\DBComment::buildChangeSql($comment_mapping);
 
 // 参数说明
-// $ddl string  DDL字符串，支持文件路径，但需要返回DDL字符串
-// $comment_mapping array 注释映射数组
-
 // $comment_mapping结构为
 // ['数据表名称'=>['name'=>'数据表名称','comment'=>'数据表注释', 'column' =>['字段名1'=>'字段1注释','字段名2'=>'字段2注释']]]
 
 ```
 
-**ddl 应除去主键和索引的定义** 
-
-**ddl 应给表和字段名加上反引号**
-
-**ddl 每一个字段都需要使用英文逗号和换行分割，需要留意最后一个是否漏掉逗号**
-
-+ 使用DDL字符串
-    ```php
-    $ddl =<<<STR
-        CREATE TABLE `migrations` (
-            `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-            `migration` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-            `before` tinyint(1) NOT NULL DEFAULT '0',
-            `run` tinyint(1) NOT NULL DEFAULT '0',
-            `after` tinyint(1) NOT NULL DEFAULT '0',
-            `batch` int(11) NOT NULL,
-        
-        ) ENGINE=InnoDB AUTO_INCREMENT=122 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-  
-        CREATE TABLE `qs_access` (
-            `role_id` smallint(6) unsigned NOT NULL,
-            `node_id` smallint(6) unsigned NOT NULL,
-            `level` tinyint(1) NOT NULL,
-            `module` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-    STR;
-    $comment_mapping = [
-            'migrations' => [
-                'name' => 'migrations',
-                'comment' => '数据迁移表',
-                'column' => [
-                    'id' => '流水号，主键',
-                    'migration' => '文件名',
-                    'before' => '运行前执行情况',
-                    'run' => '脚本执行情况',
-                    'after' => '运行前执行情况',
-                    'batch' => '批次',
-                ]
-            ],
-            'qs_access' =>
-                [
-                    'name' => 'qs_access',
-                    'comment'=> '用户组关联权限点表',
-                    'column'=>  [
-                        'role_id' => '用户组id,qs_role主键',
-                        'node_id' => '权限点id,qs_node主键',
-                        'level' => '权限点类型',
-                        'module' => '权限点名称',
-                    ],
+```php
+$comment_mapping = [
+        'migrations' => [
+            'name' => 'migrations',
+            'comment' => '数据迁移表',
+            'column' => [
+                'id' => '流水号，主键',
+                'migration' => '文件名',
+                'before' => '运行前执行情况',
+                'run' => '脚本执行情况',
+                'after' => '运行前执行情况',
+                'batch' => '批次',
+            ]
+        ],
+        'qs_access' =>
+            [
+                'name' => 'qs_access',
+                'comment'=> '用户组关联权限点表',
+                'column'=>  [
+                    'role_id' => '用户组id,qs_role主键',
+                    'node_id' => '权限点id,qs_node主键',
+                    'level' => '权限点类型',
+                    'module' => '权限点名称',
                 ],
-    ];
-  
-    \Qscmf\Utils\MigrationHelper\DBComment::buildChangeSql($ddl, $comment_mapping);
-  
-    // 输出结果为
-    /**
-    ALTER TABLE
+            ],
+];
+
+\Qscmf\Utils\MigrationHelper\DBComment::buildChangeSql($comment_mapping);
+
+// 输出结果为，可使用information_schema.columns数据表核对字段定义部分
+/**
+ALTER TABLE
     `migrations` COMMENT = '数据迁移表',
-    CHANGE COLUMN `id` `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '流水号，主键',
-    CHANGE COLUMN `migration` `migration` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '文件名',
-    CHANGE COLUMN `before` `before` TINYINT(1) NOT NULL DEFAULT '0' COMMENT '运行前执行情况',
-    CHANGE COLUMN `run` `run` TINYINT(1) NOT NULL DEFAULT '0' COMMENT '脚本执行情况',
-    CHANGE COLUMN `after` `after` TINYINT(1) NOT NULL DEFAULT '0' COMMENT '运行前执行情况',
-    CHANGE COLUMN `batch` `batch` INT(11) NOT NULL COMMENT '批次';
-  
-    ALTER TABLE
+    CHANGE COLUMN `id` `id` INT UNSIGNED NOT NULL COMMENT '流水号，主键',
+    CHANGE COLUMN `migration` `migration` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '文件名',
+    CHANGE COLUMN `before` `before` TINYINT(1) NOT NULL COMMENT '运行前执行情况',
+    CHANGE COLUMN `run` `run` TINYINT(1) NOT NULL COMMENT '脚本执行情况',
+    CHANGE COLUMN `after` `after` TINYINT(1) NOT NULL COMMENT '运行前执行情况',
+    CHANGE COLUMN `batch` `batch` INT NOT NULL COMMENT '批次';
+ALTER TABLE
     `qs_access` COMMENT = '用户组关联权限点表',
-    CHANGE COLUMN `role_id` `role_id` SMALLINT(6) UNSIGNED NOT NULL COMMENT '用户组id,qs_role主键',
-    CHANGE COLUMN `node_id` `node_id` SMALLINT(6) UNSIGNED NOT NULL COMMENT '权限点id,qs_node主键',
-    CHANGE COLUMN `level` `level` TINYINT(1) NOT NULL COMMENT '权限点类型',
-    CHANGE COLUMN `module` `module` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '权限点名称';
-    **/
-     ```
-+ 使用文件路径，需返回DDL字符串
-    ```php
-  // migrations/data/db_ddl.php文件内容
-  <?php
-    return <<<SQL
-
-        CREATE TABLE `migrations` (
-        `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-        `migration` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-        `before` tinyint(1) NOT NULL DEFAULT '0',
-        `run` tinyint(1) NOT NULL DEFAULT '0',
-        `after` tinyint(1) NOT NULL DEFAULT '0',
-        `batch` int(11) NOT NULL,
-        
-        ) ENGINE=InnoDB AUTO_INCREMENT=122 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-    
-    
-        CREATE TABLE `qs_access` (
-        `role_id` smallint(6) unsigned NOT NULL,
-        `node_id` smallint(6) unsigned NOT NULL,
-        `level` tinyint(1) NOT NULL,
-        `module` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-        
-        
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-    SQL;
-
-
-    $ddl_path = database_path('migrations/data/db_ddl.php');
-  
-    // 同上
-    // $comment_mapping = [];
-  
-    \Qscmf\Utils\MigrationHelper\DBComment::buildChangeSql($ddl_path, $comment_mapping);
-    
-    // 输出结果同上
-     ```
-
+    CHANGE COLUMN `role_id` `role_id` SMALLINT UNSIGNED NOT NULL COMMENT '用户组id,qs_role主键',
+    CHANGE COLUMN `node_id` `node_id` SMALLINT UNSIGNED NOT NULL COMMENT '权限点id,qs_node主键',
+    CHANGE COLUMN `level` `level` TINYINT NOT NULL COMMENT '权限点类型',
+    CHANGE COLUMN `module` `module` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT '权限点名称';
+**/
+ ```
