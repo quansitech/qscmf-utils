@@ -571,7 +571,7 @@ Qscmf\Utils\MigrationHelper\AuthNodeGenerate::deleteAuthNode('admin', 'user', ''
 
 ##### buildChangeSql
 ```text
-根据给定的DDL和注释映射数组生成一个更改DDL语句的SQL语句
+根据注释映射数组生成一个更改数据表及其字段注释的DDL
 ```
 ```php
 \Qscmf\Utils\Libs\DBComment::buildChangeSql($comment_mapping);
@@ -615,8 +615,8 @@ $comment_mapping = [
 /**
 ALTER TABLE
     `migrations` COMMENT = '数据迁移表',
-    CHANGE COLUMN `id` `id` INT UNSIGNED NOT NULL COMMENT '流水号，主键',
-    CHANGE COLUMN `migration` `migration` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '文件名',
+    CHANGE COLUMN `id` `id` INT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '流水号，主键',
+    CHANGE COLUMN `migration` `migration` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '文件名',
     CHANGE COLUMN `before` `before` TINYINT(1) NOT NULL COMMENT '运行前执行情况',
     CHANGE COLUMN `run` `run` TINYINT(1) NOT NULL COMMENT '脚本执行情况',
     CHANGE COLUMN `after` `after` TINYINT(1) NOT NULL COMMENT '运行前执行情况',
@@ -626,6 +626,6 @@ ALTER TABLE
     CHANGE COLUMN `role_id` `role_id` SMALLINT UNSIGNED NOT NULL COMMENT '用户组id,qs_role主键',
     CHANGE COLUMN `node_id` `node_id` SMALLINT UNSIGNED NOT NULL COMMENT '权限点id,qs_node主键',
     CHANGE COLUMN `level` `level` TINYINT NOT NULL COMMENT '权限点类型',
-    CHANGE COLUMN `module` `module` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci COMMENT '权限点名称';
+    CHANGE COLUMN `module` `module` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '权限点名称';
 **/
  ```
