@@ -30,7 +30,7 @@ SQL;
 
     static protected function parseDDLToArray(string $ddl): array
     {
-        $column_str_end_sign = ',QSACE';
+        $column_str_end_sign = ',__QSCMFACE__';
         $result = [];
         $createTablePattern = '/CREATE TABLE `(\w+)` \((.*?)\) ENGINE=(?:[\w\s\d\=]+)(?:\'(.*?)\')?/s';
         $columnPattern = '/^`(?P<name>.+?)` (?P<definition>.+?)(?: COMMENT (?:\'(?P<comment>.+?)\'))?'.$column_str_end_sign.'/is';
