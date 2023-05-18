@@ -561,3 +561,71 @@ Qscmf\Utils\MigrationHelper\AuthNodeGenerate::deleteAuthNode('admin', 'user', 'e
 // 删除控制器下所有权限点
 Qscmf\Utils\MigrationHelper\AuthNodeGenerate::deleteAuthNode('admin', 'user', '');
 ```
+
+## DBComment
+```text
+给数据表及其字段添加/修改注释
+```
+
+#### 用法
+
+##### buildChangeSql
+```text
+根据注释映射数组生成一个更改数据表及其字段注释的DDL
+```
+```php
+\Qscmf\Utils\Libs\DBComment::buildChangeSql($comment_mapping);
+
+// 参数说明
+// $comment_mapping结构为
+// ['数据表名称'=>['name'=>'数据表名称','comment'=>'数据表注释', 'column' =>['字段名1'=>'字段1注释','字段名2'=>'字段2注释']]]
+
+```
+
+```php
+$comment_mapping = [
+        'migrations' => [
+            'name' => 'migrations',
+            'comment' => '数据迁移表',
+            'column' => [
+                'id' => '流水号，主键',
+                'migration' => '文件名',
+                'before' => '运行前执行情况',
+                'run' => '脚本执行情况',
+                'after' => '运行前执行情况',
+                'batch' => '批次',
+            ]
+        ],
+        'qs_access' =>
+            [
+                'name' => 'qs_access',
+                'comment'=> '用户组关联权限点表',
+                'column'=>  [
+                    'role_id' => '用户组id,qs_role主键',
+                    'node_id' => '权限点id,qs_node主键',
+                    'level' => '权限点类型',
+                    'module' => '权限点名称',
+                ],
+            ],
+];
+
+\Qscmf\Utils\MigrationHelper\DBComment::buildChangeSql($comment_mapping);
+
+// 输出结果为一下内容，可使用information_schema.columns数据表核对字段定义部分
+/**
+ALTER TABLE
+    `migrations` COMMENT = '数据迁移表',
+    CHANGE COLUMN `id` `id` INT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '流水号，主键',
+    CHANGE COLUMN `migration` `migration` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '文件名',
+    CHANGE COLUMN `before` `before` TINYINT(1) NOT NULL COMMENT '运行前执行情况',
+    CHANGE COLUMN `run` `run` TINYINT(1) NOT NULL COMMENT '脚本执行情况',
+    CHANGE COLUMN `after` `after` TINYINT(1) NOT NULL COMMENT '运行前执行情况',
+    CHANGE COLUMN `batch` `batch` INT NOT NULL COMMENT '批次';
+ALTER TABLE
+    `qs_access` COMMENT = '用户组关联权限点表',
+    CHANGE COLUMN `role_id` `role_id` SMALLINT UNSIGNED NOT NULL COMMENT '用户组id,qs_role主键',
+    CHANGE COLUMN `node_id` `node_id` SMALLINT UNSIGNED NOT NULL COMMENT '权限点id,qs_node主键',
+    CHANGE COLUMN `level` `level` TINYINT NOT NULL COMMENT '权限点类型',
+    CHANGE COLUMN `module` `module` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '权限点名称';
+**/
+ ```
