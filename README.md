@@ -562,6 +562,36 @@ Qscmf\Utils\MigrationHelper\AuthNodeGenerate::deleteAuthNode('admin', 'user', 'e
 Qscmf\Utils\MigrationHelper\AuthNodeGenerate::deleteAuthNode('admin', 'user', '');
 ```
 
+## AccessGenerate
+
+AccessGenerate 类是一个迁移助手工具，用于向数据库中插入或删除指定角色的权限点。
+
+### 方法列表
+
+#### `add(int $role_id, string $module, string $controller, string $action) : void`
+
+功能：向数据库中插入指定角色的权限点。
+
+- `$role_id`（整数类型）：角色ID，表示需要插入权限点的角色。
+- `$module`类型）：模块名称，表示权限点所属的模块。
+- `$controller`（字符串类型）：控器名称，表示权限点所的控制器。
+- `$action`（字符串类型）权限点名称，表示具权限点。
+
+返回值：无。
+
+#### `del(int $role_id, string $module, string $controller, string $action) : void`
+
+功能：从数据库中删除指定角色的权限点。
+
+参数：
+
+- `$role_id`（整数类型）：角色ID，表示需要删除权限点的角色。
+- `$module`字符串类型）：模块名称，表示需要删除权限点的模块。
+- `$controller`（字符串类型）控制名称，表示需要删除权限点的控制器。
+- `$action`（字符串类型）：权限点名称，表示具要删除的权限点。
+
+返回值：无。
+
 ## DBComment
 ```text
 给数据表及其字段添加/修改注释
