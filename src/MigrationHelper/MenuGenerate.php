@@ -606,7 +606,21 @@ class MenuGenerate
      */
     public function deleteNode($id)
     {
-        return DB::table('qs_node')->delete($id);
+        DB::beginTransaction();
+
+        try {
+
+            DB::table('qs_access')->where('node_id', $id)->delete();
+            $node_r = DB::table('qs_node')->delete($id);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            throw $e;
+        }
+        DB::commit();
+
+        return $node_r;
     }
 
     public function resetInsertAll()
