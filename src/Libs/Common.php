@@ -1,6 +1,8 @@
 <?php
 namespace Qscmf\Utils\Libs;
 
+use Think\Cache;
+
 class Common{
 
     static function imageproxy($options, $file_id, $cache = ''){
@@ -50,13 +52,21 @@ class Common{
         return $format;
     }
 
-    static function cached(callable $function, int $expire = 0)
+    static function cached(callable $function, int $expire = 0, string $key = '', string $group = '')
     {
-        $r = new \ReflectionFunction($function);
-        $fuc_footprint = md5('f_' . $r->getFileName() . '_s_' . $r->getStartLine() . '_e_' . $r->getEndLine());
-        return function () use ($function, $fuc_footprint, $expire) {
-            $args = func_get_args();
+        $default_key = function($args) use ($function){
+            $r = new \ReflectionFunction($function);
+            $fuc_footprint = md5('f_' . $r->getFileName() . '_s_' . $r->getStartLine() . '_e_' . $r->getEndLine());
+
             $key = md5($fuc_footprint . '_k_' . serialize($args));
+
+            return $key;
+        };
+        return function () use ($function, $default_key, $expire, $key, $group) {
+            $args = func_get_args();
+            if(!$key){
+                $key = $default_key($args);
+            }
             $lock_key = $key . '_lock';
             $cache_data = S($key);
             if ($cache_data === false) {
@@ -72,11 +82,25 @@ class Common{
                     $cache_data = call_user_func_array($function, $args);
                     $cache_data = $cache_data === null ? PHP_NULL : $cache_data;
                     S($key, $cache_data, $expire);
+                    if($group != ''){
+                        $redis = Cache::getInstance('redis');
+                        $redis->sAdd($group, $key);
+                    }
+
                     $redis_lock_cls->unlock($lock_key);
                 }
 
             }
             return $cache_data;
         };
+    }
+
+    static public function clearCachedGroup($group){
+        $redis = Cache::getInstance('redis');
+        $keys = $redis->sMembers($group);
+        foreach($keys as $key){
+            $redis->del($key);
+        }
+        $redis->del($group);
     }
 }

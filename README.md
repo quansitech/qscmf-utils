@@ -494,6 +494,8 @@ echo $url;
 //参数说明
 //第一个参数为匿名函数，实现获取数据的业务逻辑
 //第二个参数为缓存过期时间，单位秒
+//第三个参数为缓存key，若为空则使用匿名函数的参数作为key
+//第四个参数为分组标识，若不为空，则产生的key将会归入该分组，使用clearCachedGroup方法可以清除该分组的缓存
 
 //用法举例
 //以下方法要从数据库读取数据，如果该页面是热点页，则无法承载太多的并发请求，需要针对其进行缓存
@@ -509,6 +511,23 @@ $project_cached = Common::cached(function($map){
 
 //使用生成的缓存函数完成数据获取和缓存的工作
 $ent = $project_cached($map);
+
+//指定缓存key举例
+$project_cached = Common::cached(function($map){
+    $donate_amount = D('ProjectDonate')->donateAmount($map);
+    return $donate_amount;
+}, 3600, 'project_donate_amount_' . $project_id, 'project_donate_amount');
+
+//指定缓存key后，可实现对缓存值不落盘更新
+$redis = Cache::getInstance('redis');
+//incrByFloat 方法必须升级到think-core v13.3.0以上版本才能使用
+$redis->incrByFloat("project_donate_amount_{$project_id}", $donate_amount);
+
+//清除分组缓存
+Common::clearCachedGroup('project_donate_amount');
+```
+
+
 ```
 
 
