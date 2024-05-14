@@ -678,3 +678,40 @@ ALTER TABLE
     CHANGE COLUMN `module` `module` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '权限点名称';
 **/
  ```
+
+## Scroller 滚动分页工具类
+
+滚动分页是基于每次获取的最后一条数据，去获取下一批数据，只要条件里包含里唯一键，就可以保证数据不重复，适用于数据量大，数据不断增加的场景。
+
+通过page的分页方式，当搜索到比较大的页码时，会导致查询时间过长，甚至超时，滚动分页可以避免这种情况。
+
+当数据并发量大时，滚动分页可以避免数据重复，保证用户体验。
+
+#### 用法
+
+```php
+public function gets(){
+    $get_data = I('get.');
+    $count = $get_data['count'] ?: C("HOME_PER_PAGE_NUM",null, 20);
+    
+    $order = 'sort asc,id desc';
+    $scroller = new Scroller($order);
+    
+    $map = [];
+    $map['status'] = \Gy_Library\DBCont::NORMAL_STATUS;
+
+    //检查参数里是否包含下一次的查询条件，有则调用applyLastCondition方法构造查询条件
+    if(isset($get_data['last_condition']) && !qsEmpty($get_data['last_condition'])){
+        $scroller->applyLastCondition($map, $get_data['last_condition']);
+    }
+
+    $list = D("Gift")->getGiftList($map, 1, $row_count, $order);
+    $res = [
+        'list' => $list,
+        'last_condition' => qsEmpty($list) ? "" : $scroller->toLastCondition($list[count($list) - 1]), //toLastCondition从最后一条数据生成下一次查询的条件
+    ];
+    
+    return new Response("获取成功", 1, $res);
+}
+
+```
