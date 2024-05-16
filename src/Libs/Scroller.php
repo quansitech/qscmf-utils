@@ -13,9 +13,19 @@ class Scroller{
     {
         $this->order_arr = collect(explode(',', $order))->map(function($item){
             $arr = explode(' ', trim($item));
+            $alias_arr = explode('.', $arr[0]);
+            if(count($alias_arr) > 1){
+                $column = $alias_arr[1];
+                $alias = $alias_arr[0];
+            }
+            else{
+                $column = $alias_arr[0];
+                $alias = '';
+            }
             return [
-                'column' => $arr[0],
-                'sort' => $arr[1] ?? 'asc'
+                'column' => $column,
+                'sort' => $arr[1] ?? 'asc',
+                'alias' => $alias
             ];
         })->toArray();
     }
@@ -36,20 +46,29 @@ class Scroller{
         if($condition_length == 1){
             $first_column = $this->order_arr[0]['column'];
             $first_sort = $this->order_arr[0]['sort'];
-            $map[$first_column] = [$this->sort_map[$first_sort], $last_condition[$first_column]];
+            $alias = $this->order_arr[0]['alias'];
+            $full_column = $alias ? $alias . '.' . $first_column : $first_column;
+            $condition = [
+                $full_column => [$this->sort_map[$first_sort], $last_condition[$first_column]]
+            ];
+            $map['_complex'] = $condition;
         }
         else if($condition_length == 2){
             $first_column = $this->order_arr[0]['column'];
             $second_column = $this->order_arr[1]['column'];
             $first_sort = $this->order_arr[0]['sort'];
             $second_sort = $this->order_arr[1]['sort'];
+            $first_alias = $this->order_arr[0]['alias'];
+            $second_alias = $this->order_arr[1]['alias'];
+            $full_first_column = $first_alias ? $first_alias . '.' . $first_column : $first_column;
+            $full_second_column = $second_alias ? $second_alias . '.' . $second_column : $second_column;
             $inner_condition = [
-                $first_column => $last_condition[$first_column],
-                $second_column => [$this->sort_map[$second_sort], $last_condition[$second_column]]
+                $full_first_column => $last_condition[$first_column],
+                $full_second_column => [$this->sort_map[$second_sort], $last_condition[$second_column]]
             ];
 
             $condition = [
-                $first_column => [$this->sort_map[$first_sort], $last_condition[$first_column]],
+                $full_first_column => [$this->sort_map[$first_sort], $last_condition[$first_column]],
                 '_complex' => $inner_condition,
                 '_logic' => 'or'
             ];
