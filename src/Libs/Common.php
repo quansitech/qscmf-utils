@@ -73,7 +73,7 @@ class Common{
                 $redis_lock_cls = new RedisLock();
                 list($is_lock, $cache_data) = $redis_lock_cls->lockWithCallback($lock_key, $expire, function () use ($key) {
                     $data = S($key);
-                    return [!!$data, $data];
+                    return [$data !== false, $data];
                 }, 30, 100000);
 
                 if ($is_lock === false) {
