@@ -715,3 +715,77 @@ public function gets(){
 }
 
 ```
+
+## AnalysisCUD
+
+经常遇到一些场景，需要对一堆数据进行批量操作。前端操作完，提交到后端是一堆处理后的数据。里面混杂着要新增，更新，还可能隐含了要删除的数据。
+
+通常我们会根据提交上来的数据id，与数据库的数据进行比较，来判断是新增还是更新，还是删除。这个类就是为了简化这个操作。
+
+#### 用法
+
+```php
+$db_data = [
+    ['id' => 1, 'name' => 'item1'],
+    ['id' => 2, 'name' => 'item2'],
+    ['id' => 3, 'name' => 'item3']
+];
+
+$new_data = [
+    ['name' => 'item4'],       // 新增
+    ['id' => 2, 'name' => 'item2_updated'], // 更新
+    ['id' => 4, 'name' => 'item4'], // 新增
+];
+
+$cud = new AnalysisCUD($db_data, $new_data);
+$result = $cud->analysis();
+
+print_r($result);
+
+/*
+Array
+(
+    [to_insert] => Array
+        (
+            [0] => Array
+                (
+                    [name] => item4
+                )
+
+            [1] => Array
+                (
+                    [id] => 4
+                    [name] => item4
+                )
+
+        )
+
+    [to_update] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 2
+                    [name] => item2_updated
+                )
+
+        )
+
+    [to_delete] => Array
+        (
+            [0] => Array
+                (
+                    [id] => 1
+                    [name] => item1
+                )
+
+            [1] => Array
+                (
+                    [id] => 3
+                    [name] => item3
+                )
+
+        )
+
+)
+*/
+```
