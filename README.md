@@ -789,3 +789,27 @@ Array
 )
 */
 ```
+
+
+## 推送消息到钉钉群
+```shell
+当程序运行异常，需要开发者及时干预时，可以便捷发送到钉钉警报群通知相关人员，便于第一时间处理。
+
+如：Mysql 与 ES 数据同步差异较大。
+```
+
+#### 用法
+```php
+\Qscmf\Utils\Libs\DingTalkRobot::send("【系统标识】Mysql 与 ES 数据同步差异较大。");
+```
+
++ 配置 access_token
+  + 全局配置
+    ```env
+    DING_TALK_ACCESS_TOKEN=your access_token
+    ```
+  + 使用时替换，优先级高
+    ```php
+    \Qscmf\Utils\Libs\DingTalkRobot::send("【系统标识】Mysql 与 ES 数据同步差异较大。", "your access_token");
+    ```
+    
