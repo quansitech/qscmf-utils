@@ -60,7 +60,7 @@ class DingTalkRobot{
     public static function send(string $msg, ?string $access_token = ''){
         $data = self::buildData($msg);
 
-        return self::postJson('?access_token='.$access_token ?: self::getAccessToken(), $data);
+        return self::postJson('?access_token='.($access_token ?: self::getAccessToken()), $data);
     }
 
 }
