@@ -489,7 +489,12 @@ echo $url;
 见imageproxy部分
 
 + cached
-开箱即用的缓存工具，内部实现防缓存雪崩机制
+开箱即用的缓存工具，内部实现防缓存雪崩和预刷新机制。
+当缓存不存在时，使用 Redis 锁（`RedisLock`）防止并发请求同时计算，只有一个请求会执行函数并写入缓存，其他请求会等待锁释放或缓存写入。
+当缓存即将过期（由 `UTIL_CACHE_REFRESH_BEFORE_EXPIRE` 环境变量控制，默认30秒）时，会尝试获取一个刷新锁。成功获取锁的请求会执行函数计算新值并更新缓存，**这个请求需要等待新值返回**。其他未获取到锁的请求会直接返回旧的缓存数据。
+锁的过期时间由 `UTIL_CACHE_LOCK_EXPIRE` 环境变量控制（默认60秒）。
+如果获取锁失败（例如，在缓存不存在的情况下），会抛出 `CachedFailureException` 异常。
+
 ```php
 //参数说明
 //第一个参数为匿名函数，实现获取数据的业务逻辑
@@ -812,4 +817,3 @@ Array
     ```php
     \Qscmf\Utils\Libs\DingTalkRobot::send("【系统标识】Mysql 与 ES 数据同步差异较大。", "your access_token");
     ```
-    

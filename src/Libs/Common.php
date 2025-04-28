@@ -64,14 +64,35 @@ class Common{
         };
         return function () use ($function, $default_key, $expire, $key, $group) {
             $args = func_get_args();
+            // 锁过期时间, 单位秒
+            $lock_expire = env("UTIL_CACHE_LOCK_EXPIRE", 60);
+            // 预刷新时间，单位秒
+            $refresh_before_expire = env("UTIL_CACHE_REFRESH_BEFORE_EXPIRE", 30);
             if(!$key){
                 $key = $default_key($args);
             }
             $lock_key = $key . '_lock';
             $cache_data = S($key);
+
+            $redis = Cache::getInstance('redis');
+            $ttl = $redis->ttl($key);
+            
+            $redis_lock_cls = RedisLock::getInstance();
+
+            $run_function = function($function, $args, $expire, $key, $group, $redis){
+                $cache_data = call_user_func_array($function, $args);
+                $cache_data = $cache_data === null ? PHP_NULL : $cache_data;
+                S($key, $cache_data, $expire);
+                if($group != ''){
+                    $redis->sAdd($group, $key);
+                }
+
+                return $cache_data;
+            };
+
             if ($cache_data === false) {
-                $redis_lock_cls = new RedisLock();
-                list($is_lock, $cache_data) = $redis_lock_cls->lockWithCallback($lock_key, $expire, function () use ($key) {
+                
+                list($is_lock, $cache_data) = $redis_lock_cls->lockWithCallback($lock_key, $lock_expire, function () use ($key) {
                     $data = S($key);
                     return [$data !== false, $data];
                 }, 30, 100000);
@@ -79,18 +100,24 @@ class Common{
                 if ($is_lock === false) {
                     throw new CachedFailureException('cached failure');
                 } else if ($is_lock === true) {
-                    $cache_data = call_user_func_array($function, $args);
-                    $cache_data = $cache_data === null ? PHP_NULL : $cache_data;
-                    S($key, $cache_data, $expire);
-                    if($group != ''){
-                        $redis = Cache::getInstance('redis');
-                        $redis->sAdd($group, $key);
-                    }
+                    $cache_data = $run_function($function, $args, $expire, $key, $group, $redis);
 
                     $redis_lock_cls->unlock($lock_key);
                 }
 
+            } else if ($expire > 0 && $ttl > 0 && $ttl <= $refresh_before_expire) {
+                // 缓存即将过期，尝试预刷新
+                $is_refreshing_key = $key . '_refreshing';
+                if ($redis_lock_cls->lock($is_refreshing_key, $refresh_before_expire)) {
+ 
+                    $cache_data = $run_function($function, $args, $expire, $key, $group, $redis);
+
+                    //$redis_lock_cls->unlock($is_refreshing_key);
+                }
+                // 直接返回旧缓存
+                return $cache_data;
             }
+            
             return $cache_data;
         };
     }
