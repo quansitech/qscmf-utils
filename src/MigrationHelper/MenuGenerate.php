@@ -377,7 +377,7 @@ class MenuGenerate
      *
      * @throws \Exception
      */
-    public function insertNavigationAllRollback($data)
+    public function insertNavigationAllRollback(array $data): void
     {
         DB::beginTransaction();
 
@@ -390,10 +390,12 @@ class MenuGenerate
                 foreach ($item['top_menu'] as $key => $menu) {
                     $this->handleMenuNode($key, $menu);
                 }
-                if (!$this->countChildrenMenu($this->menu_pid)) {
+                // 只有当menu_pid有效且没有子菜单时才删除
+                if ($this->menu_pid > 0 && !$this->countChildrenMenu($this->menu_pid)) {
                     $this->deleteMenu($this->menu_pid);
                 }
-                if (!$this->countChildrenNode($this->module_id)) {
+                // 只有当module_id有效且没有子节点时才删除
+                if ($this->module_id > 0 && !$this->countChildrenNode($this->module_id)) {
                     $this->deleteNode($this->module_id);
                 }
             }
@@ -408,13 +410,13 @@ class MenuGenerate
     /**
      * * 使用indertAll创建数据，则必须使用这个方法回滚.
      *
-     * @param $data
+     * @param array $data
      *
      * @throws \Exception
      */
-    public function insertAllRollback($data)
+    public function insertAllRollback(array $data): void
     {
-        $this->menu_pid = $this->getDefaultMenuPid();; //菜单的pid     默认为平台
+        $this->menu_pid = $this->getDefaultMenuPid(); //菜单的pid     默认为平台
         $this->module_id = 1; //模块id       默认为admin
         DB::beginTransaction();
 
@@ -430,11 +432,12 @@ class MenuGenerate
         DB::commit();
     }
 
-    public function handleMenuNode($title, $node)
+    public function handleMenuNode(string $title, array $node): void
     {
         $menu = $this->queryMenu($title, 2, $this->menu_pid);
         if (empty($menu)) {
-            throw new \Exception('回滚的菜单名不存在或者为空');
+            // 如果菜单不存在，可能是已经被其他迁移删除，直接返回，不再抛出异常
+            return;
         }
         foreach ($node as $item) {
             $this->handleNode($item);
@@ -448,78 +451,83 @@ class MenuGenerate
     /**
      * 处理 设置模块id.
      *
-     * @param $moduleName
+     * @param string $moduleName
      *
      * @throws \Exception
      */
-    public function setModuleId($moduleName)
+    public function setModuleId(string $moduleName): void
     {
         $modu = $this->queryNode($moduleName, 1, 0);
         if (!empty($modu)) {
             $this->module_id = $modu->id;
         } else {
-            throw new \Exception('未能查找到“'.$moduleName.'”模块名');
+            // 如果模块不存在，可能是已经被其他迁移删除，这里不抛出异常，而是将module_id设置为0
+            $this->module_id = 0;
         }
     }
 
     /**
      * 设置top_menu menu_pid.
      *
-     * @param $menuName
+     * @param string $menuName
      *
      * @throws \Exception
      */
-    public function setMenuPID($menuName)
+    public function setMenuPID(string $menuName): void
     {
         $modu = $this->queryMenu($menuName, 1, 0);
         if (!empty($modu)) {
             $this->menu_pid = $modu->id;
         } else {
-            throw new \Exception('未能查找到“'.$menuName.'”菜单名');
+            // 如果菜单不存在，可能是已经被其他迁移删除，这里不抛出异常，而是将menu_pid设置为0
+            $this->menu_pid = 0;
         }
     }
 
     /**
      * 处理 backend_menu.
      *
-     * @param $menuName
+     * @param string $menuName
      *
      * @throws \Exception
      */
-    public function handleMenu($menuName)
+    public function handleMenu(string $menuName): void
     {
         $menu = $this->queryMenu($menuName, 2, $this->menu_pid);
         if (!empty($menu)) {
             $this->deleteMenu($menu->id);
         } else {
-            throw new \Exception('2、未能查找到“'.$menuName.'”菜单名');
+            // 如果菜单不存在，可能是已经被其他迁移删除，直接返回
+            return;
         }
     }
 
     /**
      *处理节点的逻辑关系.
      *
-     * @param $data  这是一个数组
+     * @param array $data  这是一个数组
      *
      * @throws \Exception
      */
-    public function handleNode($data)
+    public function handleNode(array $data): void
     {
         if (empty($data)) {
-            throw new \Exception('action handleNode() $data is null ');
+            // 数据为空，直接返回
+            return;
         }
         //获取控制器
         $controller = $this->queryNode($data['controller'], 2, $this->module_id);
         if (empty($controller)) {
-            //控制器不存在
-            throw new \Exception('回滚错误，“'.$data['controller'].'”控制器不存在');
+            // 控制器不存在，可能是已经被其他迁移删除，直接返回
+            return;
         }
         $node = $this->queryNode($data['name'], 3, $controller->id);
         //删除节点
         if (!empty($node)) {
             $this->deleteNode($node->id);
         } else {
-            throw new \Exception('回滚错误，“'.$data['name'].'”节点方法不存在');
+            // 节点方法不存在，可能是已经被其他迁移删除，直接返回
+            return;
         }
         //删除控制器
         if (!$this->countChildrenNode($controller->id)) {
