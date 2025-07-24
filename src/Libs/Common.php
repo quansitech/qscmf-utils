@@ -87,7 +87,7 @@ class Common{
                     $redis->sAdd($group, $key);
                 }
 
-                return $cache_data;
+                return $cache_data !== PHP_NULL ? $cache_data : null;
             };
 
             if ($cache_data === false) {
