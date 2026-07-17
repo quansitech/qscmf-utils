@@ -3,6 +3,14 @@ namespace Qscmf\Utils\MigrationHelper;
 
 use Illuminate\Support\Facades\DB;
 
+/**
+ * 迁移中处理系统配置的工具类。
+ *
+ * 本类所有方法通过 DB::table('config') 操作「配置」表，使用裸表名；
+ * 物理表前缀由项目侧 Laravel 配置决定，请确保 DB_PREFIX 与物理表名一致。
+ *
+ * @see Laravel database.connections.<conn>.prefix  物理表前缀的决策点
+ */
 class ConfigGenerator{
 
     const NUM = 'num';
@@ -36,7 +44,7 @@ class ConfigGenerator{
     }
 
     static function getGroupId($group_name){
-        $group = DB::table('qs_config')->where('name', 'CONFIG_GROUP_LIST')->value('value');
+        $group = DB::table('config')->where('name', 'CONFIG_GROUP_LIST')->value('value');
         $group_arr = self::strToArr($group);
         collect($group_arr)->each(function($item, $index) use (&$group_id, $group_name){
             if($item === $group_name){
@@ -50,33 +58,33 @@ class ConfigGenerator{
     }
 
     static function updateGroup($config_name, $group_name){
-        $group = DB::table('qs_config')->where('name', 'CONFIG_GROUP_LIST')->value('value');
+        $group = DB::table('config')->where('name', 'CONFIG_GROUP_LIST')->value('value');
         $group_arr = self::strToArr($group);
         $group_arr = collect($group_arr)->filter(function($item) use ($group_name){
             return $item == $group_name;
         })->all();
         $group_id = key($group_arr);
-        DB::table('qs_config')->where('name', $config_name)->update(['group' => $group_id]);
+        DB::table('config')->where('name', $config_name)->update(['group' => $group_id]);
     }
 
     static function addGroup($name){
-        $group = DB::table('qs_config')->where('name', 'CONFIG_GROUP_LIST')->value('value');
+        $group = DB::table('config')->where('name', 'CONFIG_GROUP_LIST')->value('value');
         $group_arr = self::strToArr($group);
         $keys = array_keys($group_arr);
         $max_id = $keys[count($group_arr) - 1];
         $max_id++;
         $group_arr[$max_id] = $name;
-        DB::table('qs_config')->where('name', 'CONFIG_GROUP_LIST')->update(['value' => self::arrToStr($group_arr)]);
+        DB::table('config')->where('name', 'CONFIG_GROUP_LIST')->update(['value' => self::arrToStr($group_arr)]);
         return $max_id;
     }
 
     static function deleteGroup($name){
-        $group = DB::table('qs_config')->where('name', 'CONFIG_GROUP_LIST')->value('value');
+        $group = DB::table('config')->where('name', 'CONFIG_GROUP_LIST')->value('value');
         $group_arr = self::strToArr($group);
         $group_arr = collect($group_arr)->filter(function($item) use ($name){
             return $item != $name;
         })->all();
-        DB::table('qs_config')->where('name', 'CONFIG_GROUP_LIST')->update(['value' => self::arrToStr($group_arr)]);
+        DB::table('config')->where('name', 'CONFIG_GROUP_LIST')->update(['value' => self::arrToStr($group_arr)]);
     }
 
     static function addNum($name, $title, $value, $remark = '', $group = 1, $sort = 0){
@@ -114,7 +122,7 @@ class ConfigGenerator{
         $status = 1;
         
         $arr = ['name', 'type', 'title', 'group', 'extra', 'remark', 'create_time', 'update_time', 'status', 'value', 'sort'];
-        DB::table('qs_config')->insert(compact($arr));
+        DB::table('config')->insert(compact($arr));
 
         $process = new CmmProcess();
         $process->setTimeOut(30)->callTp(LARA_DIR . '/../www/index.php', '/Qscmf/ConfigCache/clear');
@@ -129,13 +137,13 @@ class ConfigGenerator{
     static function update($name, $update_data){
         $update_data['update_time'] = time();
 
-        DB::table('qs_config')->where('name', $name)->update($update_data);
+        DB::table('config')->where('name', $name)->update($update_data);
 
         $process = new CmmProcess();
         $process->setTimeOut(30)->callTp(LARA_DIR . '/../www/index.php', '/Qscmf/ConfigCache/clear');
     }
 
     static function delete($name){
-        DB::table('qs_config')->where('name', $name)->delete();
+        DB::table('config')->where('name', $name)->delete();
     }
 }
