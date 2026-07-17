@@ -4,10 +4,14 @@ namespace Qscmf\Utils\MigrationHelper;
 
 use Illuminate\Support\Facades\DB;
 
-/*
+/**
  * 生成菜单和节点列表
  * 自动处理menu和node的关系
  *
+ * 本类通过 DB::table('menu' / 'node' / 'access') 操作，使用裸表名；
+ * 物理表前缀由项目侧 Laravel 配置决定，请确保 DB_PREFIX 与物理表名一致。
+ *
+ * @see Laravel database.connections.<conn>.prefix  物理表前缀的决策点
  */
 class MenuGenerate
 {
@@ -143,12 +147,12 @@ class MenuGenerate
         if (is_array($tableData)) {
             //获取数据
             if (isset($tableData['level']) && $tableData['level'] == 1) {
-                $firstData = DB::table('qs_menu')->where('title', $tableData['title'])->where('level', 1)->first();
+                $firstData = DB::table('menu')->where('title', $tableData['title'])->where('level', 1)->first();
             } else {
                 if (!empty($this->menu_pid)) {
-                    $firstData = DB::table('qs_menu')->where('title', $tableData['title'])->where('level', 2)->where('pid', $this->menu_pid)->first();
+                    $firstData = DB::table('menu')->where('title', $tableData['title'])->where('level', 2)->where('pid', $this->menu_pid)->first();
                 } else {
-                    $firstData = DB::table('qs_menu')->where('title', $tableData['title'])->where('level', 2)->first();
+                    $firstData = DB::table('menu')->where('title', $tableData['title'])->where('level', 2)->first();
                 }
             }
             if (isset($firstData->level) && $firstData->level == 1) {
@@ -157,16 +161,16 @@ class MenuGenerate
                 $this->menu_id = $firstData->id;
             } else {
                 $data = $this->createMenuDataArray($tableData);
-                $this->menu_id = DB::table('qs_menu')->insertGetId($data);
+                $this->menu_id = DB::table('menu')->insertGetId($data);
                 if ($data['level'] == 1) {
                     $this->menu_pid = $this->menu_id;
                 }
             }
         } else {
-            $firstData = DB::table('qs_menu')->where('title', $tableData)->where('level', 2)->first();
+            $firstData = DB::table('menu')->where('title', $tableData)->where('level', 2)->first();
             if (empty($firstData)) {
                 $data = $this->createMenuDataArray($tableData);
-                $this->menu_id = DB::table('qs_menu')->insertGetId($data);
+                $this->menu_id = DB::table('menu')->insertGetId($data);
             } else {
                 $this->menu_id = $firstData->id;
             }
@@ -179,7 +183,7 @@ class MenuGenerate
         if (empty($tableData['module']) || empty($tableData['module_name'])) {
             throw new \Exception('模块创建异常,模块名为空');
         }
-        $firstData = DB::table('qs_node')->where('name', $tableData['module'])->where('level', 1)->first();
+        $firstData = DB::table('node')->where('name', $tableData['module'])->where('level', 1)->first();
         if (empty($firstData)) {
             $data = [];
             $data['name'] = $tableData['module'];
@@ -191,7 +195,7 @@ class MenuGenerate
             $data['icon'] = 'fa-list';
             $data['remark'] = '';
             $data['status'] = 1;
-            $this->module_id = DB::table('qs_node')->insertGetId($data);
+            $this->module_id = DB::table('node')->insertGetId($data);
         } else {
             $this->module_id = $firstData->id;
         }
@@ -215,15 +219,15 @@ class MenuGenerate
         }
         $data = $this->createNodeController($tableData);
         if (!empty($this->module_id)) {
-            $firstData = DB::table('qs_node')->where('name', $data['name'])->where('pid', $this->module_id)->where('level', 2)->first();
+            $firstData = DB::table('node')->where('name', $data['name'])->where('pid', $this->module_id)->where('level', 2)->first();
         } else {
-            $firstData = DB::table('qs_node')->where('name', $data['name'])->where('level', 2)->where('pid', 1)->first();
+            $firstData = DB::table('node')->where('name', $data['name'])->where('level', 2)->where('pid', 1)->first();
         }
         if (!empty($firstData)) {
-            DB::table('qs_node')->where('id', $firstData->id)->update($data);
+            DB::table('node')->where('id', $firstData->id)->update($data);
             $this->node_pid = $firstData->id;
         } else {
-            $this->node_pid = DB::table('qs_node')->insertGetId($data);
+            $this->node_pid = DB::table('node')->insertGetId($data);
         }
     }
 
@@ -240,12 +244,12 @@ class MenuGenerate
         $map['level'] = $data['level'];
         $map['pid'] = $data['pid'];
         //查重
-        $repeat = DB::table('qs_node')->where($map)->first();
+        $repeat = DB::table('node')->where($map)->first();
         if (!empty($repeat)) {
-            DB::table('qs_node')->where('id', $repeat->id)->update($data);
+            DB::table('node')->where('id', $repeat->id)->update($data);
             return $repeat->id;
         }
-        $id = DB::table('qs_node')->insertGetId($data);
+        $id = DB::table('node')->insertGetId($data);
         if (empty($id)) {
             throw new \Exception($data['name'].'方法创建异常');
         } else {
@@ -300,7 +304,7 @@ class MenuGenerate
      * 获取“平台”默认 pid
      */
     public function getDefaultMenuPid(){
-        $firstData = DB::table('qs_menu')->where('title', '平台')->first();
+        $firstData = DB::table('menu')->where('title', '平台')->first();
         if (empty($firstData)){
             return 3;
         } else {
@@ -535,7 +539,7 @@ class MenuGenerate
      */
     public function queryMenu($title, $level, $pid)
     {
-        return DB::table('qs_menu')->where('title', $title)
+        return DB::table('menu')->where('title', $title)
             ->where('level', $level)
             ->where('pid', $pid)
             ->first();
@@ -558,7 +562,7 @@ class MenuGenerate
             throw new \Exception('node name 为空');
         }
 
-        return DB::table('qs_node')->where('name', $name)
+        return DB::table('node')->where('name', $name)
             ->where('level', $level)
             ->where('pid', $pid)
             ->first();
@@ -570,7 +574,7 @@ class MenuGenerate
      */
     public function countChildrenMenu($pid)
     {
-        return DB::table('qs_menu')->where('pid', $pid)->count();
+        return DB::table('menu')->where('pid', $pid)->count();
     }
 
     /**查询id=pid的子节点数
@@ -579,7 +583,7 @@ class MenuGenerate
      */
     public function countChildrenNode($pid)
     {
-        return DB::table('qs_node')->where('pid', $pid)->count();
+        return DB::table('node')->where('pid', $pid)->count();
     }
 
     /**查询菜单下是否有子节点
@@ -588,7 +592,7 @@ class MenuGenerate
      */
     public function countMenuChildrenNode($menu_id)
     {
-        return DB::table('qs_node')->where('menu_id', $menu_id)->count();
+        return DB::table('node')->where('menu_id', $menu_id)->count();
     }
 
     /**删除菜单
@@ -597,7 +601,7 @@ class MenuGenerate
      */
     public function deleteMenu($id)
     {
-        return DB::table('qs_menu')->delete($id);
+        return DB::table('menu')->delete($id);
     }
 
     /**删除节点
@@ -610,8 +614,8 @@ class MenuGenerate
 
         try {
 
-            DB::table('qs_access')->where('node_id', $id)->delete();
-            $node_r = DB::table('qs_node')->delete($id);
+            DB::table('access')->where('node_id', $id)->delete();
+            $node_r = DB::table('node')->delete($id);
 
         } catch (\Exception $e) {
             DB::rollBack();

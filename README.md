@@ -1,10 +1,44 @@
 # qscmf辅助开发库
 
+> ⚠️ **BREAKING CHANGE（v2.x）**
+>
+> 自 v2.x 起，所有 `MigrationHelper` 类（`ConfigGenerator` / `MenuGenerate` / `AccessGenerate` / `AuthNodeGenerate`）改用**裸表名**调用 `DB::table()`，不再硬编码 `qs_` 前缀。物理表前缀完全交由项目侧的 Laravel `database.connections.<conn>.prefix`（即 `DB_PREFIX`）决定。
+>
+> **升级指引**：升级前请确认项目侧 `DB_PREFIX` 与物理表名一致。
+> - 物理表为 `qs_config` / `qs_menu` / `qs_node` / `qs_access` 的项目：将 `DB_PREFIX` 设为 `qs_'`（例如 v15 风格的项目，升级后零改动直接生效）。
+> - `DB_PREFIX=''` 但物理表仍为 `qs_xxx` 的项目（v13/v14 的巧合可用模式）：升级后 helper 会解析到不存在的裸表 `config` / `menu` / ...，**必须**把 `DB_PREFIX` 设为 `qs_`，或把对应 `Schema::create` 改为裸名。
+>
+> 详见下文「数据库表命名约定」章节。
+
 + 安装
   
   ```php
   composer require quansitech/qscmf-utils
   ```
+
+## 数据库表命名约定
+
+所有 `MigrationHelper` 类统一使用**裸表名**调用 `Illuminate\Support\Facades\DB::table()`，涉及的 4 张逻辑表为：`config`、`menu`、`node`、`access`。
+
+Laravel 会自动把 `database.connections.<conn>.prefix` 拼到裸表名前，形成最终物理表名：
+
+```
+物理表名 = prefix + 裸表名
+```
+
+**两种 `DB_PREFIX` 场景下的物理表名解析示例**：
+
+| 项目侧 `DB_PREFIX` | helper 调用 | Laravel 解析 | 物理表名 |
+|--------------------|-------------|--------------|----------|
+| `''`（空）         | `DB::table('config')` | `'' + 'config'` | `config` |
+| `'qs_'`            | `DB::table('config')` | `'qs_' + 'config'` | `qs_config` |
+
+`menu` / `node` / `access` 三张表同理。
+
+**消费方须知**：
+- helper 不再硬编码任何前缀，物理表前缀的唯一决策点是项目侧 `DB_PREFIX`；
+- 请确保 `DB_PREFIX` 与数据库中的物理表名一致，否则 helper 将解析到不存在的表；
+- 从 v1.x 升级时，如原配置 `DB_PREFIX=''` 而物理表为 `qs_xxx`，需同步调整 `DB_PREFIX` 或迁移 `Schema::create` 的命名。
 
 ## 
 

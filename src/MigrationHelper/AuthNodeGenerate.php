@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\DB;
  *
  * 生成权限点
  *
+ * 本类通过 DB::table('node') 操作，使用裸表名；
+ * 物理表前缀由项目侧 Laravel 配置决定，请确保 DB_PREFIX 与物理表名一致。
+ *
+ * @see Laravel database.connections.<conn>.prefix  物理表前缀的决策点
  */
 
 class AuthNodeGenerate
@@ -73,11 +77,11 @@ class AuthNodeGenerate
     }
 
     static public function fetchId($name, $level, $pid = 0){
-        return  DB::table('qs_node')->where('name',$name)->where('level',$level)->where('pid', $pid)->value('id');
+        return  DB::table('node')->where('name',$name)->where('level',$level)->where('pid', $pid)->value('id');
     }
 
     static protected function insertNodeGetId($name, $level, $title = '', $pid = 0){
-        return DB::table('qs_node')->insertGetId([
+        return DB::table('node')->insertGetId([
             'name'=>$name,
             'title'=>$title?:$name,
             'status'=>1,
@@ -95,13 +99,13 @@ class AuthNodeGenerate
         $module_id = self::fetchId($module_name, self::LEVEL_MODULE);
         $controller_id = self::fetchId($controller_name, self::LEVEL_CONTROLLER, $module_id);
         if ($action_name){
-            DB::table('qs_node')
+            DB::table('node')
                 ->where('name', $action_name)
                 ->where('level', self::LEVEL_ACTION)
                 ->where('pid', $controller_id)
                 ->delete();
         }else{
-            DB::table('qs_node')
+            DB::table('node')
                 ->where('pid', $controller_id)
                 ->orWhere('id', $controller_id)
                 ->delete();
